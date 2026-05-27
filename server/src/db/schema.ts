@@ -23,6 +23,7 @@ export const users = mysqlTable('users', {
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   role:         mysqlEnum('role', ['admin', 'salesman']).default('salesman').notNull(),
   status:       mysqlEnum('status', ['active', 'inactive']).default('active').notNull(),
+  tokenVersion: int('token_version').default(0).notNull(),
   createdAt:    timestamp('created_at').defaultNow().notNull(),
 });
 
