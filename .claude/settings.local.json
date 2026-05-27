@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/bhushanmalani/**)",
+      "Bash(echo \"---EXIT:$?---\")",
+      "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/design-motion-principles/workflows/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/design-motion-principles/workflows/\")",
+      "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/design-motion-principles/references/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/design-motion-principles/references/\")",
+      "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/skill-creator/agents/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/skill-creator/agents/\")",
+      "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/skill-creator/references/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/skill-creator/references/\")",
+      "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/skill-creator/scripts/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/skill-creator/scripts/\")",
+      "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/skill-creator/eval-viewer/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/skill-creator/eval-viewer/\")",
+      "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/skill-creator/assets/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/skill-creator/assets/\")",
+      "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/shadcn/rules/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/shadcn/rules/\")",
+      "Bash(cp \"/Users/bhushanmalani/Code/Sales App/.agents/skills/shadcn/mcp.md\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/shadcn/\")",
+      "Bash(cp \"/Users/bhushanmalani/Code/Sales App/.agents/skills/shadcn/cli.md\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/shadcn/\")",
+      "Bash(cp \"/Users/bhushanmalani/Code/Sales App/.agents/skills/shadcn/customization.md\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/shadcn/\")",
+      "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/capacitor-plugins/references/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/capacitor-plugins/references/\")",
+      "Bash(cp \"/Users/bhushanmalani/Code/Sales App/.agents/skills/capacitor-plugins/metadata.json\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/capacitor-plugins/\")",
+      "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/impeccable/agents/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/impeccable/agents/\")",
+      "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/impeccable/scripts/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/impeccable/scripts/\")",
+      "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/impeccable/reference/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/impeccable/reference/\")",
+      "WebSearch"
+    ]
+  }
+}

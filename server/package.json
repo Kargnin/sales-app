@@ -1,0 +1,46 @@
+{
+  "name": "@sales-app/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx src/db/seed.ts",
+    "db:triggers": "tsx src/db/setupTriggers.ts"
+  },
+  "dependencies": {
+    "@sales-app/shared": "*",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "drizzle-orm": "^0.44.2",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.5.2",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.14.1",
+    "rate-limit-redis": "^5.0.0",
+    "redis": "^5.12.1",
+    "uuid": "^11.1.0",
+    "zod": "^3.25.20"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/supertest": "^6.0.2",
+    "@types/uuid": "^10.0.0",
+    "drizzle-kit": "^0.31.1",
+    "supertest": "^7.1.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
+  }
+}
