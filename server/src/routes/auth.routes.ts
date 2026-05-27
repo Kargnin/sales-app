@@ -6,7 +6,8 @@ import { eq } from 'drizzle-orm';
 import { db } from '../db/connection.js';
 import { tenants, users } from '../db/schema.js';
 import { registerBusinessSchema, loginSchema, AuthPayload } from '@sales-app/shared';
-import { rateLimiter } from '../middleware/index.js';
+import { rateLimiter, validate } from '../middleware/index.js';
+import { config } from '../config.js';
 
 const router = Router();
 
@@ -18,26 +19,17 @@ const authLimiter = rateLimiter({
 
 router.use(authLimiter);
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret-change-in-production';
-
 // Generate access and refresh tokens
 const generateTokens = (payload: AuthPayload) => {
-  const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '15m' });
-  const refreshToken = jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: '7d' });
+  const accessToken = jwt.sign(payload, config.JWT_SECRET, { expiresIn: '15m' });
+  const refreshToken = jwt.sign(payload, config.JWT_REFRESH_SECRET, { expiresIn: '7d' });
   return { accessToken, refreshToken };
 };
 
 // ─── Register Business (Creates Tenant + Admin User) ────────────────
-router.post('/register', async (req: Request, res: Response): Promise<void> => {
+router.post('/register', validate(registerBusinessSchema), async (req: Request, res: Response): Promise<void> => {
   try {
-    const validated = registerBusinessSchema.safeParse(req.body);
-    if (!validated.success) {
-      res.status(400).json({ error: 'Validation failed', details: validated.error.format() });
-      return;
-    }
-
-    const { businessName, username, email, phone, password } = validated.data;
+    const { businessName, username, email, phone, password } = req.body;
 
     // Check if username already exists
     const existingUser = await db.query.users.findFirst({
@@ -77,6 +69,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       sub: userId,
       tenantId,
       role: 'admin',
+      tokenVersion: 0,
     };
 
     const tokens = generateTokens(userPayload);
@@ -101,15 +94,9 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
 });
 
 // ─── Login ──────────────────────────────────────────────────────────
-router.post('/login', async (req: Request, res: Response): Promise<void> => {
+router.post('/login', validate(loginSchema), async (req: Request, res: Response): Promise<void> => {
   try {
-    const validated = loginSchema.safeParse(req.body);
-    if (!validated.success) {
-      res.status(400).json({ error: 'Validation failed', details: validated.error.format() });
-      return;
-    }
-
-    const { username, password } = validated.data;
+    const { username, password } = req.body;
 
     const user = await db.query.users.findFirst({
       where: eq(users.username, username),
@@ -130,6 +117,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       sub: user.id,
       tenantId: user.tenantId,
       role: user.role,
+      tokenVersion: user.tokenVersion,
     };
 
     const tokens = generateTokens(userPayload);
@@ -167,7 +155,7 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as AuthPayload;
+    const decoded = jwt.verify(refreshToken, config.JWT_REFRESH_SECRET) as AuthPayload;
 
     // Check if the user is still active in the database
     const user = await db.query.users.findFirst({
@@ -183,6 +171,7 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
       sub: user.id,
       tenantId: user.tenantId,
       role: user.role,
+      tokenVersion: user.tokenVersion,
     };
 
     const tokens = generateTokens(userPayload);
@@ -202,7 +191,7 @@ router.post('/verify-invite', async (req: Request, res: Response): Promise<void>
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { tenantId: string; role: string; action: string };
+    const decoded = jwt.verify(token, config.JWT_SECRET) as { tenantId: string; role: string; action: string };
     if (decoded.action !== 'invite' || decoded.role !== 'salesman') {
       res.status(400).json({ error: 'Invalid invitation token' });
       return;
@@ -236,7 +225,7 @@ router.post('/register-salesman', async (req: Request, res: Response): Promise<v
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { tenantId: string; role: string; action: string };
+    const decoded = jwt.verify(token, config.JWT_SECRET) as { tenantId: string; role: string; action: string };
     if (decoded.action !== 'invite' || decoded.role !== 'salesman') {
       res.status(400).json({ error: 'Invalid invitation token' });
       return;
@@ -275,6 +264,7 @@ router.post('/register-salesman', async (req: Request, res: Response): Promise<v
       sub: userId,
       tenantId: decoded.tenantId,
       role: 'salesman',
+      tokenVersion: 0,
     };
 
     const tokens = generateTokens(userPayload);

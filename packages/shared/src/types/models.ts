@@ -101,6 +101,7 @@ export interface AuthPayload {
   sub: string;       // userId
   tenantId: string;
   role: UserRole;
+  tokenVersion: number;
 }
 
 export interface LoginResponse {

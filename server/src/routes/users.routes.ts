@@ -6,11 +6,11 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../db/connection.js';
 import { tenants, users } from '../db/schema.js';
 import { createEmployeeSchema } from '@sales-app/shared';
-import { authenticate, authorize, tenantScope, fieldGuard } from '../middleware/index.js';
+import { authenticate, authorize, tenantScope, fieldGuard, validate } from '../middleware/index.js';
+import { config } from '../config.js';
 
 const router = Router();
 
-// Apply authentication and tenant scoping globally to all user routes
 router.use(authenticate, tenantScope);
 
 // ─── Get Own Profile ────────────────────────────────────────────────
@@ -61,12 +61,8 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
 
     const updates: Partial<typeof users.$inferInsert> = {};
 
-    if (email !== undefined) {
-      updates.email = email || null;
-    }
-    if (phone !== undefined) {
-      updates.phone = phone || null;
-    }
+    if (email !== undefined) updates.email = email || null;
+    if (phone !== undefined) updates.phone = phone || null;
 
     if (newPassword) {
       if (!currentPassword) {
@@ -83,6 +79,7 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
         return;
       }
       updates.passwordHash = await bcrypt.hash(newPassword, 10);
+      (updates as any).tokenVersion = (user.tokenVersion ?? 0) + 1;
     }
 
     if (Object.keys(updates).length === 0) {
@@ -117,23 +114,13 @@ router.patch('/me', async (req: Request, res: Response): Promise<void> => {
 router.post(
   '/',
   authorize('admin'),
-  fieldGuard({
-    admin: {
-      reject: ['id', 'tenantId'],
-    },
-  }),
+  fieldGuard({ admin: { reject: ['id', 'tenantId'] } }),
+  validate(createEmployeeSchema),
   async (req: Request, res: Response): Promise<void> => {
   try {
-    const validated = createEmployeeSchema.safeParse(req.body);
-    if (!validated.success) {
-      res.status(400).json({ error: 'Validation failed', details: validated.error.format() });
-      return;
-    }
-
-    const { username, email, phone, password, role } = validated.data;
+    const { username, email, phone, password, role } = req.body;
     const tenantId = req.user!.tenantId;
 
-    // Check if username already exists globally
     const existingUser = await db.query.users.findFirst({
       where: eq(users.username, username),
     });
@@ -201,11 +188,7 @@ router.get('/', authorize('admin'), async (req: Request, res: Response): Promise
 router.patch(
   '/:id',
   authorize('admin'),
-  fieldGuard({
-    admin: {
-      reject: ['id', 'tenantId', 'role', 'username', 'passwordHash'],
-    },
-  }),
+  fieldGuard({ admin: { reject: ['id', 'tenantId', 'role', 'username', 'passwordHash'] } }),
   async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
@@ -217,7 +200,6 @@ router.patch(
       return;
     }
 
-    // Check if the employee belongs to the same tenant
     const employee = await db.query.users.findFirst({
       where: and(eq(users.id, id), eq(users.tenantId, tenantId)),
     });
@@ -237,6 +219,11 @@ router.patch(
     }
     if (email !== undefined) updates.email = email || null;
     if (phone !== undefined) updates.phone = phone || null;
+
+    // Increment tokenVersion to invalidate all existing tokens when deactivating
+    if (status === 'inactive' && employee.status !== 'inactive') {
+      (updates as any).tokenVersion = (employee.tokenVersion ?? 0) + 1;
+    }
 
     if (Object.keys(updates).length === 0) {
       res.status(400).json({ error: 'No valid update fields provided' });
@@ -263,12 +250,10 @@ router.patch(
 router.post('/generate-invite', authorize('admin'), async (req: Request, res: Response): Promise<void> => {
   try {
     const tenantId = req.user!.tenantId;
-    const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
-    
-    // Generate an invite token valid for 7 days
+
     const inviteToken = jwt.sign(
       { tenantId, role: 'salesman', action: 'invite' },
-      JWT_SECRET,
+      config.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
