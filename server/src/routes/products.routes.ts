@@ -4,28 +4,26 @@ import { eq, and, sql } from 'drizzle-orm';
 import { db } from '../db/connection.js';
 import { products, orderItems } from '../db/schema.js';
 import { createProductSchema, updateProductSchema } from '@sales-app/shared';
-import { authenticate, authorize, tenantScope, fieldGuard } from '../middleware/index.js';
+import { authenticate, authorize, tenantScope, fieldGuard, validate } from '../middleware/index.js';
 
 const router = Router();
 
-// Apply authentication and tenant scoping globally to all product routes
 router.use(authenticate, tenantScope);
 
 // ─── Get Scoped Tenant Products Catalog ──────────────────────────────
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
     const tenantId = req.user!.tenantId;
-
     const pageParam = req.query.page;
     const limitParam = req.query.limit;
     const searchQuery = req.query.search;
 
-    let baseWhere: any = eq(products.tenantId, tenantId);
+    let baseWhere: ReturnType<typeof eq> = eq(products.tenantId, tenantId);
     if (searchQuery) {
       baseWhere = and(
         baseWhere,
-        sql`lower(${products.name}) like ${'%' + (searchQuery as string).toLowerCase() + '%'}`
-      );
+        sql`lower(${products.name}) like ${'%' + (searchQuery as string).toLowerCase() + '%'}`,
+      ) as any;
     }
 
     if (pageParam !== undefined) {
@@ -33,29 +31,17 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
       const limit = parseInt(limitParam as string, 10) || 10;
       const offset = (page - 1) * limit;
 
-      const paginatedProducts = await db
-        .select()
-        .from(products)
-        .where(baseWhere)
-        .limit(limit)
-        .offset(offset);
-
-      const countResult = await db
-        .select({ value: sql<number>`count(*)` })
-        .from(products)
-        .where(baseWhere);
+      const [paginatedProducts, countResult] = await Promise.all([
+        db.select().from(products).where(baseWhere).limit(limit).offset(offset),
+        db.select({ value: sql<number>`count(*)` }).from(products).where(baseWhere),
+      ]);
 
       const totalCount = Number(countResult[0]?.value || 0);
       const totalPages = Math.ceil(totalCount / limit);
 
       res.json({
         products: paginatedProducts,
-        pagination: {
-          totalCount,
-          totalPages,
-          currentPage: page,
-          limit,
-        },
+        pagination: { totalCount, totalPages, currentPage: page, limit },
       });
     } else {
       const allProducts = await db.select().from(products).where(baseWhere);
@@ -71,20 +57,11 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
 router.post(
   '/',
   authorize('admin'),
-  fieldGuard({
-    admin: {
-      reject: ['id', 'tenantId'],
-    },
-  }),
+  fieldGuard({ admin: { reject: ['id', 'tenantId'] } }),
+  validate(createProductSchema),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const validated = createProductSchema.safeParse(req.body);
-      if (!validated.success) {
-        res.status(400).json({ error: 'Validation failed', details: validated.error.format() });
-        return;
-      }
-
-      const { name, sku, price, stockQuantity } = validated.data;
+      const { name, sku, price, stockQuantity } = req.body;
       const tenantId = req.user!.tenantId;
       const productId = uuidv4();
 
@@ -97,10 +74,7 @@ router.post(
         stockQuantity: stockQuantity ?? 0,
       });
 
-      const newProduct = await db.query.products.findFirst({
-        where: eq(products.id, productId),
-      });
-
+      const newProduct = await db.query.products.findFirst({ where: eq(products.id, productId) });
       res.status(201).json(newProduct);
     } catch (error) {
       console.error('Error creating product:', error);
@@ -113,23 +87,13 @@ router.post(
 router.patch(
   '/:id',
   authorize('admin'),
-  fieldGuard({
-    admin: {
-      reject: ['id', 'tenantId'],
-    },
-  }),
+  fieldGuard({ admin: { reject: ['id', 'tenantId'] } }),
+  validate(updateProductSchema),
   async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
       const tenantId = req.user!.tenantId;
 
-      const validated = updateProductSchema.safeParse(req.body);
-      if (!validated.success) {
-        res.status(400).json({ error: 'Validation failed', details: validated.error.format() });
-        return;
-      }
-
-      // Check if product exists in tenant scope
       const existingProduct = await db.query.products.findFirst({
         where: and(eq(products.id, id), eq(products.tenantId, tenantId)),
       });
@@ -139,21 +103,16 @@ router.patch(
         return;
       }
 
-      const { name, sku, price, stockQuantity } = validated.data;
+      const { name, sku, price, stockQuantity } = req.body;
 
-      await db.update(products)
-        .set({
-          name: name !== undefined ? name : undefined,
-          sku: sku !== undefined ? sku : undefined,
-          price: price !== undefined ? String(price) : undefined,
-          stockQuantity: stockQuantity !== undefined ? stockQuantity : undefined,
-        })
-        .where(eq(products.id, id));
+      await db.update(products).set({
+        name: name !== undefined ? name : undefined,
+        sku: sku !== undefined ? sku : undefined,
+        price: price !== undefined ? String(price) : undefined,
+        stockQuantity: stockQuantity !== undefined ? stockQuantity : undefined,
+      }).where(eq(products.id, id));
 
-      const updatedProduct = await db.query.products.findFirst({
-        where: eq(products.id, id),
-      });
-
+      const updatedProduct = await db.query.products.findFirst({ where: eq(products.id, id) });
       res.json({ message: 'Product details updated successfully', product: updatedProduct });
     } catch (error) {
       console.error('Error editing product:', error);
@@ -168,7 +127,6 @@ router.delete('/:id', authorize('admin'), async (req: Request, res: Response): P
     const id = req.params.id as string;
     const tenantId = req.user!.tenantId;
 
-    // Check if product exists in tenant scope
     const existingProduct = await db.query.products.findFirst({
       where: and(eq(products.id, id), eq(products.tenantId, tenantId)),
     });
@@ -178,7 +136,6 @@ router.delete('/:id', authorize('admin'), async (req: Request, res: Response): P
       return;
     }
 
-    // Deletion validation check: verify if the product is associated with any historical orders
     const associatedOrders = await db.select().from(orderItems).where(eq(orderItems.productId, id));
 
     if (associatedOrders.length > 0) {
@@ -189,9 +146,7 @@ router.delete('/:id', authorize('admin'), async (req: Request, res: Response): P
       return;
     }
 
-    // Safe to delete product
     await db.delete(products).where(eq(products.id, id));
-
     res.json({ message: 'Product deleted successfully', id });
   } catch (error) {
     console.error('Error deleting product:', error);

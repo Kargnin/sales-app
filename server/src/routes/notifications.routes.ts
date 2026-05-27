@@ -2,12 +2,11 @@ import { Router } from 'express';
 import { db } from '../db/connection.js';
 import { notifications } from '../db/schema.js';
 import { eq, desc, and, sql } from 'drizzle-orm';
-import { authenticate } from '../middleware/index.js';
+import { authenticate, tenantScope } from '../middleware/index.js';
 
 const router = Router();
 
-// Require authentication for all notification routes
-router.use(authenticate);
+router.use(authenticate, tenantScope);
 
 // Get notifications for the authenticated user
 router.get('/', async (req, res) => {
@@ -18,7 +17,7 @@ router.get('/', async (req, res) => {
 
     const baseWhere = and(
       eq(notifications.tenantId, user.tenantId),
-      eq(notifications.userId, user.sub)
+      eq(notifications.userId, user.sub),
     );
 
     if (pageParam !== undefined) {
@@ -26,41 +25,24 @@ router.get('/', async (req, res) => {
       const limit = parseInt(limitParam as string, 10) || 10;
       const offset = (page - 1) * limit;
 
-      // Query paginated rows
-      const userNotifications = await db
-        .select()
-        .from(notifications)
-        .where(baseWhere)
-        .orderBy(desc(notifications.createdAt))
-        .limit(limit)
-        .offset(offset);
+      const [userNotifications, countResult] = await Promise.all([
+        db.select().from(notifications).where(baseWhere)
+          .orderBy(desc(notifications.createdAt)).limit(limit).offset(offset),
+        db.select({ value: sql<number>`count(*)` }).from(notifications).where(baseWhere),
+      ]);
 
-      // Query total count
-      const [countResult] = await db
-        .select({ value: sql<number>`count(*)` })
-        .from(notifications)
-        .where(baseWhere);
-
-      const totalCount = Number(countResult?.value || 0);
+      const totalCount = Number(countResult[0]?.value || 0);
       const totalPages = Math.ceil(totalCount / limit);
 
       res.json({
         notifications: userNotifications,
-        pagination: {
-          totalCount,
-          totalPages,
-          currentPage: page,
-          limit,
-        },
+        pagination: { totalCount, totalPages, currentPage: page, limit },
       });
     } else {
       const limit = parseInt(limitParam as string, 10) || 50;
       const userNotifications = await db
-        .select()
-        .from(notifications)
-        .where(baseWhere)
-        .orderBy(desc(notifications.createdAt))
-        .limit(limit);
+        .select().from(notifications).where(baseWhere)
+        .orderBy(desc(notifications.createdAt)).limit(limit);
 
       res.json(userNotifications);
     }
@@ -76,16 +58,13 @@ router.patch('/:id/read', async (req, res) => {
     const { id } = req.params;
     const user = req.user!;
 
-    // Make sure the notification belongs to the user
     await db.update(notifications)
       .set({ isRead: true })
-      .where(
-        and(
-          eq(notifications.id, id),
-          eq(notifications.tenantId, user.tenantId),
-          eq(notifications.userId, user.sub)
-        )
-      );
+      .where(and(
+        eq(notifications.id, id),
+        eq(notifications.tenantId, user.tenantId),
+        eq(notifications.userId, user.sub),
+      ));
 
     res.json({ success: true });
   } catch (error) {
@@ -101,13 +80,11 @@ router.patch('/mark-all-read', async (req, res) => {
 
     await db.update(notifications)
       .set({ isRead: true })
-      .where(
-        and(
-          eq(notifications.tenantId, user.tenantId),
-          eq(notifications.userId, user.sub),
-          eq(notifications.isRead, false)
-        )
-      );
+      .where(and(
+        eq(notifications.tenantId, user.tenantId),
+        eq(notifications.userId, user.sub),
+        eq(notifications.isRead, false),
+      ));
 
     res.json({ success: true });
   } catch (error) {
