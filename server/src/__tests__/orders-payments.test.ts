@@ -252,7 +252,7 @@ describe('Orders, Public Invoice & Payments Integration Tests (Phase 4)', () => 
         });
 
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain('Product with ID');
+      expect(res.body.error).toContain('Product not found');
     });
 
     it('7. rejects order with zero quantity', async () => {
