@@ -3,9 +3,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Card } from "../../components/ui/card";
 import { Text } from "../../components/ui/text";
 import { useVisits } from "../../hooks/queries/useVisits";
-import tailwindConfig from "../../../tailwind.config";
-
-const colors = tailwindConfig.theme.extend.colors;
 
 function getInitials(name?: string) {
   if (!name) return "??";
@@ -31,16 +28,16 @@ export function RecentVisitsList() {
 
   if (isLoading) {
     return (
-      <View style={{ paddingHorizontal: 16, gap: 12 }}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+      <View className="px-4 gap-3">
+        <View className="flex-row justify-between items-center">
           <Text variant="heading-sm" color="charcoal">Recent Visits</Text>
         </View>
-        <Card style={{ padding: 0, overflow: "hidden" }}>
-          <View style={{ flexDirection: "row", alignItems: "center", padding: 16, opacity: 0.6 }}>
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors["stone-border"], marginRight: 12 }} />
-            <View style={{ flex: 1, gap: 6 }}>
-              <View style={{ backgroundColor: colors["stone-border"], borderRadius: 4, width: "40%", height: 14 }} />
-              <View style={{ backgroundColor: colors["stone-border"], borderRadius: 4, width: "60%", height: 12 }} />
+        <Card className="p-0 overflow-hidden">
+          <View className="flex-row items-center p-4 opacity-60">
+            <View className="w-10 h-10 rounded-full bg-stone-border mr-3" />
+            <View className="flex-1 gap-1.5">
+              <View className="bg-stone-border rounded w-[40%] h-3.5" />
+              <View className="bg-stone-border rounded w-[60%] h-3" />
             </View>
           </View>
         </Card>
@@ -50,12 +47,12 @@ export function RecentVisitsList() {
 
   if (isError) {
     return (
-      <View style={{ paddingHorizontal: 16, gap: 12 }}>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+      <View className="px-4 gap-3">
+        <View className="flex-row justify-between items-center">
           <Text variant="heading-sm" color="charcoal">Recent Visits</Text>
         </View>
-        <Card style={{ flexDirection: "row", alignItems: "center", gap: 12, borderColor: colors["ember-orange"], backgroundColor: colors["surface-recessed"] }}>
-          <Ionicons name="alert-circle-outline" size={24} color={colors["ember-orange"]} />
+        <Card className="flex-row items-center gap-3 border-ember-orange bg-surface-recessed">
+          <Ionicons name="alert-circle-outline" size={24} color="#ff3e00" />
           <Text variant="body" color="ember">Failed to load recent visits.</Text>
         </Card>
       </View>
@@ -65,8 +62,8 @@ export function RecentVisitsList() {
   const recentVisits = visits?.slice(0, 5) || [];
 
   return (
-    <View style={{ paddingHorizontal: 16, gap: 12 }}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+    <View className="px-4 gap-3">
+      <View className="flex-row justify-between items-center">
         <Text variant="heading-sm" color="charcoal">
           Recent Visits
         </Text>
@@ -78,14 +75,14 @@ export function RecentVisitsList() {
       </View>
 
       {recentVisits.length === 0 ? (
-        <Card style={{ alignItems: "center", justifyContent: "center", paddingVertical: 32 }}>
-          <Ionicons name="calendar-outline" size={32} color={colors.ash} style={{ marginBottom: 8 }} />
+        <Card className="items-center justify-center py-8">
+          <Ionicons name="calendar-outline" size={32} color="#848281" className="mb-2" />
           <Text variant="body" color="ash">
             No recent visits recorded today.
           </Text>
         </Card>
       ) : (
-        <Card style={{ padding: 0, overflow: "hidden" }}>
+        <Card className="py-3 px-4 overflow-hidden rounded-xl gap-2">
           {recentVisits.map((item, index) => {
             const isLast = index === recentVisits.length - 1;
             const salesmanName = item.salesmanName || "Sales Representative";
@@ -94,31 +91,21 @@ export function RecentVisitsList() {
 
             return (
               <View key={item.id}>
-                <View style={{ flexDirection: "row", alignItems: "center", padding: 16 }}>
+                <View className="flex-row items-center py-2 px-1">
                   {/* Avatar Circle */}
-                  <View style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: 12,
-                    borderWidth: 1,
-                    borderColor: colors["stone-border"],
-                    backgroundColor: colors["surface-recessed"],
-                  }}>
+                  <View className="w-10 h-10 rounded-full items-center justify-center mr-3 border border-stone-border bg-surface-recessed">
                     <Text variant="label-medium" color="charcoal">
                       {initials}
                     </Text>
                   </View>
- 
+
                   {/* Visit Details */}
-                  <View style={{ flex: 1, gap: 2 }}>
+                  <View className="flex-1 gap-0.5">
                     <Text variant="body" color="charcoal">
                       {salesmanName}
                     </Text>
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                      <Ionicons name="storefront-outline" size={14} color={colors.ash} style={{ marginRight: 4 }} />
+                    <View className="flex-row items-center">
+                      <Ionicons name="storefront-outline" size={14} color="#848281" style={{ marginRight: 4 }} />
                       <Text variant="caption" color="ash" numberOfLines={1}>
                         {item.shopName}
                       </Text>
@@ -126,7 +113,7 @@ export function RecentVisitsList() {
                   </View>
 
                   {/* Status / Time */}
-                  <View style={{ alignItems: "flex-end", gap: 2 }}>
+                  <View className="items-end gap-0.5">
                     <Text variant="label-medium" color="charcoal">
                       Completed
                     </Text>
@@ -136,8 +123,7 @@ export function RecentVisitsList() {
                   </View>
                 </View>
 
-                {/* Line Separator */}
-                {!isLast && <View style={{ height: 1, backgroundColor: colors["stone-border"], marginHorizontal: 16 }} />}
+                {!isLast && <View className="h-px bg-stone-border mx-4 mt-1" />}
               </View>
             );
           })}

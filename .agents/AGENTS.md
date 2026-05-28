@@ -4,7 +4,7 @@
 
 This is a React Native + Expo (SDK 56) app targeting iOS and Android, with Android as the primary platform. The server is an Express + Drizzle ORM backend.
 
-- **Client**: `client/` — Expo Router file-based routing, NativeWind v4 styling with Stitch "Warm Tactile Industrial" design tokens, Zustand (client state) + TanStack Query (server data)
+- **Client**: `client/` — Expo Router file-based routing, NativeWind v5 styling with Stitch "Warm Tactile Industrial" design tokens, Zustand (client state) + TanStack Query (server data)
 - **Server**: `server/` — Express API on port 3001, MySQL via Drizzle ORM, JWT auth with refresh tokens
 - **Design source**: Stitch project `2048573934882273867`
 
@@ -25,6 +25,26 @@ We should be able to change UI components easily without affecting the applicati
 Use Expo and React Native related skills whenever possible.
 
 For UI design use Stitch MCP to fetch app page designs.
+
+## React & State Patterns
+
+- **Zustand selectors**: Always use individual selectors (`useStore((s) => s.field)`) instead of destructuring the entire store (`const { field } = useStore()`). Selectors prevent unnecessary re-renders and keep the store extensible when new state is added later.
+- **React keys**: Use a stable, unique data property as the `key` prop (`key={item.id}`, `key={item.route}`). Never use array index unless the list is guaranteed to never reorder, filter, or insert/remove items.
+- **useCallback**: Wrap event handlers in `useCallback` when they are dependencies of other hooks (`useCallback`, `useMemo`, `useEffect`) or passed as props to memoized children.
+- **Module scope**: Place `require()` calls and module-level constants at the top of the file, not inside component bodies.
+- **Consistency across files**: Before writing a new file, check patterns used in sibling files from the same feature. Both files should follow the same conventions (selector patterns, handler patterns, import style).
+- **No duplicate components**: Before creating a component, search the codebase for an existing equivalent. Reuse or adapt rather than duplicating.
+
+## Accessibility
+
+- Every animation must handle reduced motion. Use `useReducedMotion()` from `react-native-reanimated` and skip animations (instant `duration: 0`) when the user has the OS accessibility setting enabled.
+- Add `accessibilityRole` and `accessibilityLabel` on interactive elements (buttons, links, toggles).
+
+## NativeWind v5 Notes
+
+- Shadow classes (`shadow-sm`, `shadow-md`, `shadow-lg`, `shadow-xl`, `shadow-2xl`, `shadow-none`) are **fully supported** on native iOS and Android.
+- `active:` pseudo-class is **fully supported** on native (maps to `onPressIn`/`onPressOut` on `Pressable`/`TouchableOpacity`).
+- Transition classes (`transition-colors`, `transition-all`, etc.) have **experimental** support on native. Prefer `activeOpacity` for press feedback, which is guaranteed to work.
 
 ## Planning & Artifact Rules
 

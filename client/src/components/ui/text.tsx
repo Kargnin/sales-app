@@ -1,50 +1,48 @@
 import { Text as RNText, type TextProps as RNTextProps } from "react-native";
-import tailwindConfig from "../../../tailwind.config";
+import { cn } from "../../lib/utils";
 
 type TextVariant = "display" | "heading" | "heading-sm" | "body" | "label-medium" | "caption";
+type TextColor = "graphite" | "charcoal" | "ash" | "midnight" | "ember" | "surface" | "success" | "warning" | "info";
 
 interface TextProps extends RNTextProps {
   variant?: TextVariant;
-  color?: "graphite" | "charcoal" | "ash" | "midnight" | "ember" | "surface" | "success" | "warning" | "info";
+  color?: TextColor;
+  className?: string;
 }
 
-const variantStyles: Record<TextVariant, { fontFamily: string; fontSize: number; letterSpacing: number; lineHeight: number }> = {
-  display:       { fontFamily: "Fraunces_500", fontSize: 32, letterSpacing: -0.8, lineHeight: 35.2 },
-  heading:       { fontFamily: "Inter_600",    fontSize: 23, letterSpacing: -0.44, lineHeight: 27.6 },
-  "heading-sm":  { fontFamily: "Inter_600",    fontSize: 19, letterSpacing: -0.25, lineHeight: 26.22 },
-  body:          { fontFamily: "Inter_400",    fontSize: 15, letterSpacing: -0.2,  lineHeight: 22.05 },
-  "label-medium":{ fontFamily: "Inter_500",    fontSize: 15, letterSpacing: -0.2,  lineHeight: 22.05 },
-  caption:       { fontFamily: "Inter_400",    fontSize: 12, letterSpacing: -0.14, lineHeight: 18.96 },
+const variantClasses: Record<TextVariant, string> = {
+  display:       "font-display text-[32px] leading-[35.2px] tracking-[-0.8px]",
+  heading:       "font-body-semibold text-[23px] leading-[27.6px] tracking-[-0.44px]",
+  "heading-sm":  "font-body-semibold text-[19px] leading-[26.22px] tracking-[-0.25px]",
+  body:          "font-body text-[15px] leading-[22.05px] tracking-[-0.2px]",
+  "label-medium":"font-body-medium text-[15px] leading-[22.05px] tracking-[-0.2px]",
+  caption:       "font-body text-[12px] leading-[18.96px] tracking-[-0.14px]",
 };
 
-const colors = tailwindConfig.theme.extend.colors;
-
-const colorMap: Record<NonNullable<TextProps["color"]>, string> = {
-  graphite: colors.graphite,
-  charcoal: colors.charcoal,
-  ash: colors.ash,
-  midnight: colors.midnight,
-  ember: colors["ember-orange"],
-  surface: colors.surface,
-  success: colors.success,
-  warning: colors.warning,
-  info: colors.info,
+const colorClasses: Record<TextColor, string> = {
+  graphite: "text-graphite",
+  charcoal: "text-charcoal",
+  ash:      "text-ash",
+  midnight: "text-midnight",
+  ember:    "text-ember-orange",
+  surface:  "text-surface",
+  success:  "text-success",
+  warning:  "text-warning",
+  info:     "text-info",
 };
 
-export function Text({ variant = "body", color = "graphite", style, children, ...props }: TextProps) {
-  const v = variantStyles[variant];
+export function Text({
+  variant = "body",
+  color = "graphite",
+  className,
+  style,
+  children,
+  ...props
+}: TextProps) {
   return (
     <RNText
-      style={[
-        {
-          fontFamily: v.fontFamily,
-          fontSize: v.fontSize,
-          letterSpacing: v.letterSpacing,
-          lineHeight: v.lineHeight,
-          color: colorMap[color],
-        },
-        style,
-      ]}
+      className={cn(variantClasses[variant], colorClasses[color], className)}
+      style={style}
       selectable
       {...props}
     >

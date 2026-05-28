@@ -1,3 +1,5 @@
+import "../global.css";
+
 import { useEffect } from "react";
 import { Stack, router, useSegments } from "expo-router";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -6,21 +8,20 @@ import { Fraunces_500Medium } from "@expo-google-fonts/fraunces";
 import { ActivityIndicator, View } from "react-native";
 import { queryClient } from "../src/lib/queryClient";
 import { useAuthStore } from "../src/stores/authStore";
-import tailwindConfig from "../tailwind.config";
-
-const colors = tailwindConfig.theme.extend.colors;
 
 function AuthRedirect() {
-  const { isAuthenticated, isLoading, user, hydrate } = useAuthStore();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const user = useAuthStore((s) => s.user);
   const segments = useSegments();
 
   useEffect(() => {
-    hydrate();
+    useAuthStore.getState().hydrate();
   }, []);
 
   useEffect(() => {
     if (isLoading) return;
-    const inAuthGroup = segments[0] === "login";
+    const inAuthGroup = segments[0] === "(auth)";
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace("/login");
@@ -42,8 +43,8 @@ export default function RootLayout() {
 
   if (!fontsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.canvas }}>
-        <ActivityIndicator size="large" color={colors.midnight} />
+      <View className="flex-1 justify-center items-center bg-canvas">
+        <ActivityIndicator size="large" color="#121212" />
       </View>
     );
   }
@@ -53,7 +54,7 @@ export default function RootLayout() {
       <AuthRedirect />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
-        <Stack.Screen name="login" />
+        <Stack.Screen name="(auth)" />
         <Stack.Screen name="(admin)" />
       </Stack>
     </QueryClientProvider>

@@ -1,0 +1,39 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+
+@import "nativewind/theme";
+
+@theme {
+  --color-canvas: #fbfaf9;
+  --color-surface: #ffffff;
+  --color-surface-recessed: #f8f7f4;
+  --color-stone-border: #f2f0ed;
+  --color-graphite: #474645;
+  --color-charcoal: #343433;
+  --color-ash: #848281;
+  --color-midnight: #121212;
+  --color-ember-orange: #ff3e00;
+  --color-mascot-peach: #ffdad2;
+  --color-mascot-sand: #d1bba4;
+  --color-success: #00ca48;
+  --color-info: #0090ff;
+  --color-warning: #ffbb26;
+}
+
+:root {
+  --color-canvas: #fbfaf9;
+  --color-surface: #ffffff;
+  --color-surface-recessed: #f8f7f4;
+  --color-stone-border: #f2f0ed;
+  --color-graphite: #474645;
+  --color-charcoal: #343433;
+  --color-ash: #848281;
+  --color-midnight: #121212;
+  --color-ember-orange: #ff3e00;
+  --color-mascot-peach: #ffdad2;
+  --color-mascot-sand: #d1bba4;
+  --color-success: #00ca48;
+  --color-info: #0090ff;
+  --color-warning: #ffbb26;
+}

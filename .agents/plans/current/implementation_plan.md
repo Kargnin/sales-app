@@ -1,118 +1,130 @@
-# Stitch-Style Admin Dashboard & Login UI Redesign (Revised)
+# Implementation Plan - Signup & Reset Password Screens (Revised)
 
-This plan outlines the redesign of the **Admin Dashboard** and **Login Page** in the React Native / Expo client to match the exact Stitch designs, and integrates a secure, role-adaptive metrics API in the Express / Drizzle backend to serve real business overview data.
+Implement premium, tactile, and animated "Sign Up", "Reset Password", "Admin Invite Generation", and "Salesman Invite Acceptance" screens in the Expo app based on the Stitch designs, with full backend integration, updated routing, and robust state actions.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> **Email or Username Login Support**: In the Stitch login mockup, the input field placeholder is `Email address`. We will update the server-side `/auth/login` endpoint to accept **either** email or username in that field. The shared zod `loginSchema` will be updated to say "Username or email is required" and the API error will be generic ("Invalid credentials") for security.
->
-> **Forgot Password Flow**: We will style the `Forgot Password?` link exactly as in the mockup, and wire it up to display a native React Native `Alert.alert("Reset Password", "Please contact your system administrator to reset your password.")`.
->
-> **Asset Localization**: We will download the two mascot illustrations from Stitch to `client/assets/` locally, eliminating external network dependencies and ensuring instant load times.
-
----
+> This revised plan fully addresses the two registration paths:
+> 1. **Business-Owner Registration (`/auth/register`)**: Standard registration form for new admin users and tenants. Exposes `Username` explicitly in the form to align with the backend contract and prevent username collision issues.
+> 2. **Employee Registration via Invite (`/auth/register-salesman`)**: The admin generates a secure JWT invite link, and the salesman accepts the invitation, verifies the invite details (`/auth/verify-invite`), and registers a salesman account.
 
 ## Proposed Changes
 
-### Backend Components
-
-We will implement a secure, role-adaptive backend endpoint `GET /api/dashboard/metrics` that queries Drizzle ORM to compute actual live metrics, and update shared schemas and auth routes to allow logging in with either username or email.
-
-#### [NEW] [dashboard.routes.ts](file:///Users/bhushanmalani/Code/Sales%20App/server/src/routes/dashboard.routes.ts)
-- Implement `GET /metrics` route.
-- **Security**: Apply global middleware `authenticate` and `tenantScope` so it is locked to authenticated users of a specific tenant.
-- **Role-Adaptive Scoping**:
-  - Check `req.user.role`.
-  - For `salesman`, restrict the counts/sums to their own `salesmanId = req.user.sub` (e.g. Total Sales revenue from their orders, Total Visits from their visits, and `activeSalesmen` = 1, `pendingApprovals` = 0).
-  - For `admin`, fetch aggregate totals across the full `tenantId` (e.g. Total Sales of all orders, total active salesmen, total pending shops, total visits).
-- Compute:
-  1. `totalRevenue`: Sum of `totalAmount` of all confirmed/completed/delivered orders.
-  2. `activeSalesmen`: Count of active users with `role = 'salesman'`.
-  3. `pendingApprovals`: Count of shops with `status = 'pending_approval'`.
-  4. `totalVisits`: Count of all check-in visits.
-  5. `revenueChange` / `ordersChange` / `visitsChange`: Dynamic comparisons (or hardcoded percentage constants matching Stitch).
-
-#### [MODIFY] [index.ts](file:///Users/bhushanmalani/Code/Sales%20App/server/src/index.ts)
-- Import and register `/api/dashboard` routes.
-
-#### [MODIFY] [auth.routes.ts](file:///Users/bhushanmalani/Code/Sales%20App/server/src/routes/auth.routes.ts)
-- Update login endpoint to support finding a user by username **or** email address:
-  `where: username.includes('@') ? eq(users.email, username) : eq(users.username, username)`
-- Align error messages to "Invalid credentials."
-
-#### [MODIFY] [auth.schemas.ts](file:///Users/bhushanmalani/Code/Sales%20App/packages/shared/src/schemas/auth.schemas.ts)
-- Update `loginSchema` validation:
-  ```typescript
-  export const loginSchema = z.object({
-    username: z.string().min(1, { message: 'Username or email is required' }),
-    password: z.string().min(1, { message: 'Password is required' }),
-  });
-  ```
+We will extend our validation schemas, update `useAuthStore` actions, build out components and pages matching Stitch design screens, integrate navigation flow, and configure the backend endpoint.
 
 ---
 
-### Frontend Components
+### [Component Name] backend-auth
 
-We will completely rebuild the Admin Dashboard and Login layout to match the typography, spacing, border styles, mascot illustrations, and floating elements of the Stitch designs.
+#### [MODIFY] [auth.routes.ts](file:///Users/bhushanmalani/Code/Sales%20App/server/src/routes/auth.routes.ts)
+- Add a new `/reset-password` POST route:
+  - Takes `{ email }` in `req.body`.
+  - Simulates sending a password reset email by logging the action.
+  - Returns a standard success response: `{ message: 'Password reset link sent successfully' }`.
 
-#### [MODIFY] [index.ts](file:///Users/bhushanmalani/Code/Sales%20App/client/src/types/index.ts)
-- Update `DashboardMetrics` interface to include `pendingApprovals: number` field.
+---
 
-#### [MODIFY] [useDashboardMetrics.ts](file:///Users/bhushanmalani/Code/Sales%20App/client/src/hooks/queries/useDashboardMetrics.ts)
-- Update query function to fetch from `/api/dashboard/metrics` using the `apiClient`.
+### [Component Name] client-validation
 
-#### [MODIFY] [metrics-grid.tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/src/features/dashboard/metrics-grid.tsx)
-- Re-style the Overview/Stats Grid as a beautiful 2x2 wrapping grid.
-- Style cards with `bg-white`, a 1px border (`#f2f0ed`), 10px rounded corners, and proper icon badges matching Stitch.
-- **Robust States**: 
-  - Render a matching 2x2 grid of custom shaded Skeleton Cards when `isLoading` is true.
-  - Render a clean error state text when the API errors out.
+#### [MODIFY] [validation.ts](file:///Users/bhushanmalani/Code/Sales%20App/client/src/lib/validation.ts)
+- Define `signupSchema` with zod validations matching the backend register contract:
+  - `businessName`: string, min 2 chars.
+  - `username`: string, min 3 chars.
+  - `email`: string, optional/empty, must be valid email format if provided.
+  - `phone`: string, optional.
+  - `password`: string, min 8 chars.
+- Define `resetPasswordSchema`:
+  - `email`: string, must be valid email format.
+- Define `inviteAcceptSchema`:
+  - `username`: string, min 3 chars.
+  - `password`: string, min 8 chars.
+  - `email`: string, optional/empty, must be valid email format if provided.
+  - `phone`: string, optional.
 
-#### [NEW] [recent-visits-list.tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/src/features/dashboard/recent-visits-list.tsx)
-- Replaces the generic recent orders list with "Recent Visits" showing real check-in activity using the existing `useVisits` hook.
-- Implement list items matching Stitch design:
-  - Initials circle avatar (`JD`, `AS`, `RJ`) with `#eeeeed` background.
-  - Salesman Name + Shop Name with a subtle storefront icon.
-  - Status text ("Completed" or "In Progress" colored appropriately).
-  - Time text formatted via standard locale-aware `Intl.DateTimeFormat` (or a helper).
-  - "Recent Visits" header row with a "View All" action button.
-- **Robust States**:
-  - Render simple list skeletons when `isLoading` is true.
-  - Render a beautiful custom empty state message ("No recent visits recorded today") when the visits list is empty.
+---
 
-#### [MODIFY] [dashboard.tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/app/(admin)/dashboard.tsx)
-- Replace generic "Dashboard" text with a Stitch-perfect Header Row:
-  - Localized mascot illustration (`assets/mascot_partner.png`) in a rounded circle with standard fallback.
-  - Dynamic Greeting derived from the current hour using `new Date().getHours()`:
-    - `Good morning, Partner` (5:00 - 11:59)
-    - `Good afternoon, Partner` (12:00 - 17:59)
-    - `Good evening, Partner` (18:00 - 4:59)
-  - Far-right Notification Bell button with rounded border.
-- Integrate the newly designed `MetricsGrid` and `RecentVisitsList`.
-- Render the Floating Action Button (FAB) pill shape at the bottom-right: `bg-primary` (black/charcoal), containing a white `+` icon and text `New Product` with a rich drop shadow.
+### [Component Name] client-auth-store
+
+#### [MODIFY] [authStore.ts](file:///Users/bhushanmalani/Code/Sales%20App/client/src/stores/authStore.ts)
+- Add the `register` action:
+  - Takes `businessName`, `username`, `email`, `phone`, `password`.
+  - Calls `/auth/register` via `apiClient`.
+  - Saves returned tokens to secure storage and sets authentication states.
+- Add the `registerSalesman` action:
+  - Takes `token`, `username`, `password`, `email`, `phone`.
+  - Calls `/auth/register-salesman` via `apiClient`.
+  - Saves returned tokens to secure storage and sets salesman authentication states.
+- Add the `resetPassword` action:
+  - Takes `email`.
+  - Calls `/auth/reset-password` via `apiClient` to trigger simulated email.
+
+---
+
+### [Component Name] client-screens
+
+#### [NEW] [signup.tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/app/signup.tsx)
+- Create the React Native / Expo signup entry screen rendering `SignupForm`.
+
+#### [NEW] [reset-password.tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/app/reset-password.tsx)
+- Create the React Native / Expo reset password entry screen rendering `ResetPasswordForm`.
+
+#### [NEW] [invite/[token].tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/app/invite/%5Btoken%5D.tsx)
+- Create the React Native / Expo dynamic invitation acceptance route.
+- Verifies the invite token on mount using `/auth/verify-invite` (fetches `tenantName` and `role`).
+- If token is loading: Render `ActivityIndicator` in a beautiful sand/stone centered spinner.
+- If token is invalid or expired: Show an "Invalid Invitation" card matching the tactile design with a back to login button.
+- If token is valid: Render a custom registration form "Join the [TenantName] Family" where the salesman can fill `username`, `password`, optional `email`, and `phone` to register.
+
+#### [NEW] [signup-form.tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/src/features/auth/signup-form.tsx)
+- Implement signup screen matching Stitch screen design `8aae2f460fd44d7385ce4ee7f821addd`.
+- Include the "Join the Family" heading, a playful tactile icon container, and input fields for Username, Business Name, Email, and Password (with toggle visibility).
+- Handle submit action by calling `useAuthStore.getState().register()`.
+- Bind button `loading` spinner to `formState.isSubmitting`.
+- Set server-side errors on fields using React Hook Form's `setError`.
+
+#### [NEW] [reset-password-form.tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/src/features/auth/reset-password-form.tsx)
+- Implement reset password screen matching Stitch screen design `f68464544b5f4af4959480d906431aac`.
+- Render a transactional back arrow in the upper header.
+- Include the `mascot_partner.png` with a "mail" icon badge.
+- Include input field for Email Address.
+- Support a multi-stage view: show success feedback card ("Link Sent!") with a custom stone inset border.
 
 #### [MODIFY] [login-form.tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/src/features/auth/login-form.tsx)
-- Rebuild inputs to have custom envelope (`mail`) and lock (`lock`) inline icons on the left, comfortable padding, and NO label above them.
-- Add password visibility toggle on the right of the password input.
-- Insert the beautiful circular local mascot image (`assets/mascot_welcome.png`) with white borders, shadow, and an absolute-positioned heart button in red/orange overlay at the bottom right.
-- Add the `Forgot Password?` link styled in Ember Orange `#ff3e00` aligned on the right.
-- Change header to serif "Welcome back" (using Fraunces font).
-- Re-style footer link `Don't have an account? Create an account` with the proper underlined styles.
+- Modify the "Forgot Password?" touchable to navigate to `/reset-password` instead of showing a static Alert.
+- Modify the "Create an account" link to navigate to `/signup`.
+
+#### [MODIFY] [index.tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/app/(admin)/team/index.tsx)
+- Upgrade the placeholder `TeamScreen` to render an invite generator component.
+- The Admin can click "Generate Salesman Invite Link" which fires a POST to `/api/users/generate-invite`.
+- Shows a Stone Inset card containing the invite link (constructed using the current Expo API URL base + `/invite/[token]`).
+- Includes a copy button using React Native's `Clipboard` utility and shows visual copied confirmation.
+
+#### [MODIFY] [_layout.tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/app/_layout.tsx)
+- Update `AuthRedirect` logic to bypass redirecting to login when segments include public-accessible pages:
+  ```typescript
+  const publicRoutes = ["login", "signup", "reset-password", "invite"];
+  const inAuthGroup = publicRoutes.includes(segments[0]);
+  ```
+- Add stack screen definitions for `"signup"`, `"reset-password"`, and `"invite/[token]"` inside the root stack router layout.
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-- Run TS checks on both client and server:
-  - `cd client && npx tsc --noEmit`
-  - `cd server && npm run build`
-- Add Integration Tests:
-  - **Auth**: A test inside `server/src/__tests__/auth.test.ts` verifying login with email in the `username` field.
-  - **Dashboard**: A new test suite `server/src/__tests__/dashboard.test.ts` verifying that `GET /api/dashboard/metrics` returns role-scoped numbers (admin sees all user aggregates, salesman sees only their own data).
+- Build and compile check the TypeScript project:
+  ```bash
+  cd client && npx tsc --noEmit
+  ```
+- Verify the Expo compiler runs:
+  ```bash
+  cd client && npx expo start --web
+  ```
 
 ### Manual Verification
-- Deploy and preview the screens in the Expo web/native runner:
-  - Ensure the Login screen displays the mascot header, inputs have matching icons, forgot password link is present, and password eye toggles.
-  - Verify that the Dashboard loads stats dynamically from the backend, renders the mascot header, shows recent visits with initials avatars, and has the floating `+ New Product` pill.
+- Navigate to the login page and test clicking "Forgot Password?" to confirm transitions to the reset password page.
+- Test submitting an email on the reset password screen; verify backend receives the call and that a cute Success State card is rendered.
+- Test transitioning to the signup screen, fill valid fields, and verify a new business tenant and admin user are registered, tokens are saved, and you are successfully auto-logged into the admin dashboard!
+- Log in as admin, navigate to the Team tab, generate an invite link, and copy it.
+- Open the copied invite link path (e.g. `/invite/[token]`), verify the verification API verifies it, fill details, submit, and confirm that the salesman registers and successfully logs in!

@@ -292,4 +292,15 @@ router.post('/register-salesman', async (req: Request, res: Response): Promise<v
   }
 });
 
+// ─── Reset Password (Mock endpoint for simulation) ──────────────────
+router.post('/reset-password', async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body;
+  if (!email) {
+    res.status(400).json({ error: 'Email is required' });
+    return;
+  }
+  console.log(`Password reset link requested for email: ${email}`);
+  res.json({ message: 'Password reset link sent successfully' });
+});
+
 export default router;

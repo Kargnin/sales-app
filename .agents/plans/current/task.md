@@ -1,26 +1,15 @@
-# Task Checklist: Stitch-Style Admin Dashboard & Login UI Redesign
+# Task List - Signup & Reset Password Screens (Revised)
 
-- [x] Setup & Assets Localization
-  - [x] Download mascot illustrations (`mascot_partner.png` and `mascot_welcome.png`) from Stitch URLs to `client/assets/`
-- [x] Shared Schema & Backend Implementation
-  - [x] Update shared `loginSchema` in `packages/shared/src/schemas/auth.schemas.ts` to accept username/email and update validation message
-  - [x] Modify `server/src/routes/auth.routes.ts` login handler to query user by `username` or `email` and return generic "Invalid credentials." error
-  - [x] Implement `server/src/routes/dashboard.routes.ts` with `GET /metrics`, auth middleware, and role-based scoping (admin gets tenant aggregate, salesman gets filtered data)
-  - [x] Register dashboard routes in `server/src/index.ts`
-  - [x] Write integration tests in `server/src/__tests__/auth.test.ts` (email login) and `server/src/__tests__/dashboard.test.ts` (metrics role-scoping)
-- [x] Client Types & Data Hooks
-  - [x] Add `pendingApprovals` field to `DashboardMetrics` interface in `client/src/types/index.ts`
-  - [x] Update `useDashboardMetrics.ts` query to fetch from `/api/dashboard/metrics`
-- [x] Client UI Redesign
-  - [x] Redesign `LoginForm` in `client/src/features/auth/login-form.tsx` to match Stitch layout (mascot header, heart overlay, borderless inputs with envelope/lock inline icons, toggle eye, forgot password native Alert, underlined footer)
-  - [x] Redesign `MetricsGrid` in `client/src/features/dashboard/metrics-grid.tsx` with a 2x2 wrapping grid, 10px rounded borders, loading skeletons, and error boundary handling
-  - [x] Create `RecentVisitsList` in `client/src/features/dashboard/recent-visits-list.tsx` to fetch check-ins via `useVisits` and render initials avatars, styled completed/in-progress tags, and loading/empty states
-  - [x] Redesign `DashboardScreen` in `client/app/(admin)/dashboard.tsx` with wobbly mascot header, time-based dynamic greeting, and floating "+ New Product" FAB pill
-- [x] Strict NativeWind v5 and React Native Styling Refactoring
-  - [x] Refactor core UI components (`text.tsx`, `card.tsx`, `button.tsx`, `input.tsx`) to remove hardcoded hex values, JS style objects, and `colorMap` mappings, relying exclusively on Tailwind classNames and theme variables.
-  - [x] Clean up screen router templates (`dashboard.tsx`, `index.tsx`, `_layout.tsx`, and all indices under `(admin)/` - orders, shops, team, more) to eliminate custom stylesheets and inline styles, replacing them with Tailwind classNames.
-  - [x] Refactor all feature components (`LoginForm`, `MetricsGrid`, `RecentVisitsList`, `RecentOrdersList`) to use Tailwind text and background color classes instead of custom style objects or custom color props.
-- [x] Verification & Testing
-  - [x] Run client-side type checking (`cd client && npx tsc --noEmit`)
-  - [x] Run server-side type checking (`cd server && npx tsc --noEmit`)
-  - [x] Execute server integration tests (`npx vitest run ...` -> 18 of 18 passed)
+Checklist tracking progress of registration, password reset, and salesman invite integrations:
+
+- [x] Add backend endpoint for `/reset-password` in `auth.routes.ts` <!-- id: 0 -->
+- [x] Add validation schemas `signupSchema`, `resetPasswordSchema`, and `inviteAcceptSchema` in `validation.ts` <!-- id: 1 -->
+- [x] Implement `register`, `registerSalesman`, and `resetPassword` actions in `authStore.ts` <!-- id: 2 -->
+- [x] Implement `SignupForm` feature component in `signup-form.tsx` <!-- id: 3 -->
+- [x] Implement `ResetPasswordForm` feature component in `reset-password-form.tsx` <!-- id: 4 -->
+- [x] Update `login-form.tsx` navigation hooks for signup and password reset links <!-- id: 5 -->
+- [x] Configure routing layout in `client/app/_layout.tsx` to include `signup`, `reset-password`, and `invite` paths without auto-login-redirects <!-- id: 6 -->
+- [x] Add file routes `signup.tsx` and `reset-password.tsx` in `client/app/` <!-- id: 7 -->
+- [x] Implement Invite Generator on Admin Team Screen `client/app/(admin)/team/index.tsx` <!-- id: 8 -->
+- [x] Add dynamic invite acceptance route `client/app/invite/[token].tsx` and verification UI <!-- id: 9 -->
+- [x] Run full verification checks and verify TS compilation and Expo server state <!-- id: 10 -->

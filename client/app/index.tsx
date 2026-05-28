@@ -1,17 +1,14 @@
 import { Redirect } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 import { useAuthStore } from "../src/stores/authStore";
-import tailwindConfig from "../tailwind.config";
-
-const colors = tailwindConfig.theme.extend.colors;
 
 export default function Index() {
   const { isAuthenticated, isLoading, user } = useAuthStore();
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.canvas }}>
-        <ActivityIndicator size="large" color={colors.midnight} />
+      <View className="flex-1 justify-center items-center bg-canvas">
+        <ActivityIndicator size="large" color="#121212" />
       </View>
     );
   }

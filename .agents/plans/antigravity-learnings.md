@@ -103,3 +103,53 @@
 - **Root cause**: Antigravity conflates "using color tokens from a config file" with "using Tailwind classNames." The walkthrough oversells what was actually implemented.
 - **Fix applied**: Corrected in audit. The color tokenization via tailwind config is a valid improvement over hardcoded hex values, but the walkthrough should accurately describe the approach used.
 - **Rule to add**: "In walkthroughs, be precise about the styling approach used. 'Color tokenization via tailwind.config.ts' is accurate; 'Tailwind classNames' implies `className='bg-white text-charcoal'` which is a different pattern. Do not conflate these."
+
+---
+
+## [2026-05-28] Side Navigation Menu Drawer
+
+### Pattern: Zustand Store Destructuring Without Selectors (New)
+- **What happened**: `SideMenu.tsx` destructured entire Zustand stores (`const { isDrawerOpen, closeDrawer } = useUIStore()`, `const { user, logout } = useAuthStore()`). The `_layout.tsx` file (written in the same implementation) correctly used selectors (`useUIStore((s) => s.openDrawer)`), showing Antigravity knows the pattern but doesn't apply it consistently.
+- **Root cause**: Antigravity defaults to object destructuring for Zustand stores, which is the simpler syntax. It used the selector syntax in one place where it was clearly modeled (the `GlobalHeader` one-liner) but fell back to destructuring in `SideMenu` where multiple values were needed.
+- **Fix applied**: Replaced all Zustand store accesses in `SideMenu.tsx` with individual selectors: `useUIStore((s) => s.isDrawerOpen)`, `useUIStore((s) => s.closeDrawer)`, `useAuthStore((s) => s.user)`, `useAuthStore((s) => s.logout)`.
+- **Rule to add**: "Always use Zustand selectors (`useStore((s) => s.field)`) instead of destructuring (`const { field } = useStore()`). Selectors prevent unnecessary re-renders when the store grows and are the recommended Zustand best practice. For actions that are stable references, either pattern is technically fine, but selectors should be the default."
+
+### Pattern: Array Index as React Key (New)
+- **What happened**: `renderItem` used `key={index}` for menu items, with an `idx + 10` offset hack for bottom items to prevent key collisions with primary items.
+- **Root cause**: Antigravity defaults to using the array index parameter from `.map()` as the key without looking for a stable unique property on the data.
+- **Fix applied**: Changed to `key={item.route}` — each menu item has a unique route string. Removed the `index` parameter from `renderItem` and the `idx + 10` offset hack.
+- **Rule to add**: "Always use a stable, unique property from the data as the React `key` prop. Do not use array index (`key={index}`) unless the list is guaranteed to never be reordered, filtered, or have items inserted/removed. Common choices: `item.id`, `item.route`, `item.name`."
+
+### Pattern: No Reduced Motion / Accessibility Handling for Animations (New)
+- **What happened**: The drawer open/close animation and backdrop fade had no handling for users who have "Reduce Motion" enabled in their OS accessibility settings. The spring animation (`damping: 20, stiffness: 90`) could cause discomfort for users with vestibular disorders.
+- **Root cause**: Antigravity implements the happy-path animation but doesn't check accessibility settings. The design-motion-principles skill mandates `prefers-reduced-motion` handling for every animation.
+- **Fix applied**: Added `useReducedMotion()` hook from `react-native-reanimated` in `SideMenu.tsx`. When reduced motion is enabled, all animations use `withTiming(value, { duration: 0 })` (instant transition) instead of spring/timed animations.
+- **Rule to add**: "Every animation must respect the user's accessibility settings. In React Native, use `useReducedMotion()` from `react-native-reanimated` (v4) or `AccessibilityInfo.isReduceMotionEnabled()` from React Native. When reduced motion is enabled, use instant transitions (duration: 0) or skip the animation entirely."
+
+### Pattern: Handlers Not Wrapped in useCallback (New)
+- **What happened**: `handleNavigate`, `handleLogout`, and `renderItem` in `SideMenu.tsx` were defined as plain functions inside the component body, recreated on every render. `renderItem` was already wrapped in `useCallback` but its dependency `handleNavigate` was unstable.
+- **Root cause**: Antigravity defines handlers as arrow functions in the component body without memoizing them. This is the most common React pattern in tutorials but causes unstable references in components that use `useCallback` or `useMemo` downstream.
+- **Fix applied**: Wrapped `handleNavigate` and `handleLogout` in `useCallback` with proper dependencies. `renderItem`'s dependency array now references the stable `handleNavigate` reference.
+- **Rule to add**: "Wrap event handlers and callbacks in `useCallback` when they are (a) passed as props to child components, (b) used as dependencies in other `useCallback`/`useMemo` hooks, or (c) used in `useEffect` dependencies. This prevents cascading re-renders and stale closure bugs."
+
+### Pattern: Inconsistent Code Patterns Within Same Implementation
+- **What happened**: In the same commit, `_layout.tsx` used Zustand selectors correctly (`useUIStore((s) => s.openDrawer)`) while `SideMenu.tsx` used destructuring (`const { isDrawerOpen, closeDrawer } = useUIStore()`). Both files were part of the same implementation plan.
+- **Root cause**: Antigravity appears to write each file in isolation without checking patterns used in sibling files from the same plan. The `_layout.tsx` file happened to use the correct pattern because the `openDrawer` call was a one-liner that fit naturally as a selector.
+- **Fix applied**: Unified to selector pattern in `SideMenu.tsx`.
+- **Rule to add**: "Before writing a new file, check the patterns used in other files that are part of the same implementation plan. Consistency within a single feature is as important as consistency with the broader codebase."
+
+---
+
+## [2026-05-28] Signup, Reset Password & Invite Registration Screens
+
+### Pattern: Zustand Destructuring Without Selectors (3rd occurrence)
+- **What happened**: `_layout.tsx` destructured `{ isAuthenticated, isLoading, user, hydrate }` from `useAuthStore()`. This is the third occurrence of this pattern across three different Antigravity implementations (SideMenu, then a previous _layout, now this _layout). The fix applied in the SideMenu cycle was documented with a rule, but the pattern recurred because modifying existing files (_layout.tsx) bypassed the newly learned rule which was only applied to new files.
+- **Root cause**: Antigravity treats existing files that it modifies as "already correct" and only applies new patterns to newly created files. When modifying a pre-existing file for routing changes, it left the existing (incorrect) destructuring pattern intact.
+- **Fix applied**: Replaced destructuring with individual selectors and `useAuthStore.getState().hydrate()` for the one-time hydration.
+- **Rule to add**: "When modifying an existing file, audit the ENTIRE file for pattern compliance (Zustand selectors, accessibility labels, useCallback, module-level imports), not just the lines being changed. A modification to one section is an opportunity to bring the whole file up to standard."
+
+### Pattern: New Files Get Accessibility, Modified Files Don't (New)
+- **What happened**: All newly created forms (signup-form.tsx, reset-password-form.tsx, invite/[token].tsx) had proper `accessibilityRole` and `accessibilityLabel` on interactive elements. But login-form.tsx, which was modified in the same implementation to add navigation links, did NOT get accessibility labels on its password toggle or forgot-password link — elements that existed before the modification.
+- **Root cause**: Antigravity applies accessibility rules when creating new components but doesn't retroactively add them to existing components being modified, even when touching the same interactive elements.
+- **Fix applied**: Added `accessibilityRole="button"` and `accessibilityLabel` to password toggle and forgot-password link in login-form.tsx.
+- **Rule to add**: Same rule as above — "When modifying a file, audit it for missing accessibility attributes."

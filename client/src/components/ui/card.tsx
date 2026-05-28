@@ -1,25 +1,20 @@
 import { View, type ViewProps } from "react-native";
-import tailwindConfig from "../../../tailwind.config";
+import { cn } from "../../lib/utils";
 
 interface CardProps extends ViewProps {
   recessed?: boolean;
+  className?: string;
 }
 
-const colors = tailwindConfig.theme.extend.colors;
-
-export function Card({ recessed, style, children, ...props }: CardProps) {
+export function Card({ recessed, className, style, children, ...props }: CardProps) {
   return (
     <View
-      style={[
-        {
-          backgroundColor: recessed ? colors["surface-recessed"] : colors.surface,
-          borderRadius: 10,
-          borderWidth: 1,
-          borderColor: colors["stone-border"],
-          padding: 20,
-        },
-        style,
-      ]}
+      className={cn(
+        "bg-surface rounded-10 border border-stone-border p-5",
+        recessed && "bg-surface-recessed",
+        className,
+      )}
+      style={style}
       {...props}
     >
       {children}

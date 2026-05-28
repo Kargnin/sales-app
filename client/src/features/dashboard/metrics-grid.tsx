@@ -3,9 +3,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { Card } from "../../components/ui/card";
 import { Text } from "../../components/ui/text";
 import { useDashboardMetrics } from "../../hooks/queries/useDashboardMetrics";
-import tailwindConfig from "../../../tailwind.config";
 
-const colors = tailwindConfig.theme.extend.colors;
+const SUCCESS = "#00ca48";
+const WARNING = "#ffbb26";
+const ASH = "#848281";
+const EMBER = "#ff3e00";
+const STONE = "#f2f0ed";
 
 function MetricCard({
   label,
@@ -25,8 +28,8 @@ function MetricCard({
   trendIcon?: boolean;
 }) {
   return (
-    <Card style={{ flex: 1, minWidth: "46%", maxWidth: "48%", gap: 6 }}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+    <Card className="flex-1 min-w-[46%] max-w-[48%] gap-1.5 rounded-xl">
+      <View className="flex-row justify-between items-center">
         <Text variant="caption" color="ash">
           {label}
         </Text>
@@ -34,9 +37,9 @@ function MetricCard({
       <Text variant="display" color={textColor}>
         {value}
       </Text>
-      <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
+      <View className="flex-row items-center mt-1">
         {trendIcon ? (
-          <Ionicons name="trending-up" size={14} color={colors.success} style={{ marginRight: 4 }} />
+          <Ionicons name="trending-up" size={14} color={SUCCESS} style={{ marginRight: 4 }} />
         ) : (
           <Ionicons name={iconName} size={14} color={iconColor} style={{ marginRight: 4 }} />
         )}
@@ -50,10 +53,10 @@ function MetricCard({
 
 function SkeletonCard() {
   return (
-    <Card style={{ flex: 1, minWidth: "46%", maxWidth: "48%", gap: 6, opacity: 0.6 }}>
-      <View style={{ backgroundColor: colors["stone-border"], borderRadius: 4, width: "60%", height: 12, marginBottom: 8 }} />
-      <View style={{ backgroundColor: colors["stone-border"], borderRadius: 4, width: "80%", height: 28, marginBottom: 10 }} />
-      <View style={{ backgroundColor: colors["stone-border"], borderRadius: 4, width: "50%", height: 12 }} />
+    <Card className="flex-1 min-w-[46%] max-w-[48%] gap-1.5 opacity-60">
+      <View className="bg-stone-border rounded w-[60%] h-3 mb-2" />
+      <View className="bg-stone-border rounded w-[80%] h-7 mb-2.5" />
+      <View className="bg-stone-border rounded w-[50%] h-3" />
     </Card>
   );
 }
@@ -63,7 +66,7 @@ export function MetricsGrid() {
 
   if (isLoading) {
     return (
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, paddingHorizontal: 16, justifyContent: "space-between" }}>
+      <View className="flex-row flex-wrap gap-3 px-4 justify-between">
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
@@ -74,9 +77,9 @@ export function MetricsGrid() {
 
   if (isError || !data) {
     return (
-      <View style={{ paddingHorizontal: 16 }}>
-        <Card style={{ flexDirection: "row", alignItems: "center", gap: 12, borderColor: colors["ember-orange"], backgroundColor: colors["surface-recessed"] }}>
-          <Ionicons name="alert-circle-outline" size={24} color={colors["ember-orange"]} />
+      <View className="px-4">
+        <Card className="flex-row items-center gap-3 border-ember-orange bg-surface-recessed">
+          <Ionicons name="alert-circle-outline" size={24} color={EMBER} />
           <Text variant="body" color="ember">
             Failed to load dashboard metrics.
           </Text>
@@ -95,28 +98,28 @@ export function MetricsGrid() {
   };
 
   return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12, paddingHorizontal: 16, justifyContent: "space-between" }}>
+    <View className="flex-row flex-wrap gap-3 px-4 justify-between">
       <MetricCard
         label="Total Sales"
         value={formatRevenue(data.totalRevenue)}
         subtext={`+${data.revenueChange}%`}
         iconName="trending-up"
-        iconColor={colors.success}
-        trendIcon={true}
+        iconColor={SUCCESS}
+        trendIcon
       />
       <MetricCard
         label="Active Salesmen"
         value={String(data.activeSalesmen)}
         subtext="Online now"
         iconName="people-outline"
-        iconColor={colors.success}
+        iconColor={SUCCESS}
       />
       <MetricCard
         label="Pending Approvals"
         value={String(data.pendingApprovals)}
         subtext="New shops"
         iconName="storefront-outline"
-        iconColor={colors.warning}
+        iconColor={WARNING}
         textColor="ember"
       />
       <MetricCard
@@ -124,7 +127,7 @@ export function MetricsGrid() {
         value={String(data.totalVisits)}
         subtext="This week"
         iconName="calendar-outline"
-        iconColor={colors.ash}
+        iconColor={ASH}
       />
     </View>
   );

@@ -11,6 +11,9 @@ interface AuthState {
   isLoading: boolean;
 
   login: (username: string, password: string) => Promise<void>;
+  register: (businessName: string, username: string, email: string, phone: string, password: string) => Promise<void>;
+  registerSalesman: (token: string, username: string, password: string, email: string, phone: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   hydrate: () => Promise<void>;
 }
@@ -40,6 +43,55 @@ export const useAuthStore = create<AuthState>((set) => ({
       refreshToken: data.refreshToken,
       user: data.user,
       isAuthenticated: true,
+    });
+  },
+
+  register: async (businessName: string, username: string, email: string, phone: string, password: string) => {
+    const data = await apiClient<{
+      accessToken: string;
+      refreshToken: string;
+      user: User;
+    }>("/auth/register", {
+      method: "POST",
+      body: { businessName, username, email, phone, password },
+    });
+
+    await storage.setItem("accessToken", data.accessToken);
+    await storage.setItem("refreshToken", data.refreshToken);
+
+    set({
+      token: data.accessToken,
+      refreshToken: data.refreshToken,
+      user: data.user,
+      isAuthenticated: true,
+    });
+  },
+
+  registerSalesman: async (token: string, username: string, password: string, email: string, phone: string) => {
+    const data = await apiClient<{
+      accessToken: string;
+      refreshToken: string;
+      user: User;
+    }>("/auth/register-salesman", {
+      method: "POST",
+      body: { token, username, password, email, phone },
+    });
+
+    await storage.setItem("accessToken", data.accessToken);
+    await storage.setItem("refreshToken", data.refreshToken);
+
+    set({
+      token: data.accessToken,
+      refreshToken: data.refreshToken,
+      user: data.user,
+      isAuthenticated: true,
+    });
+  },
+
+  resetPassword: async (email: string) => {
+    await apiClient("/auth/reset-password", {
+      method: "POST",
+      body: { email },
     });
   },
 

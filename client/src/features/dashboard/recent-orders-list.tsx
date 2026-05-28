@@ -2,58 +2,48 @@ import { View, FlatList } from "react-native";
 import { Card } from "../../components/ui/card";
 import { Text } from "../../components/ui/text";
 import { MOCK_RECENT_ORDERS } from "../../lib/mockData";
-import tailwindConfig from "../../../tailwind.config";
 
-const colors = tailwindConfig.theme.extend.colors;
-
-const statusBgColors: Record<string, string> = {
-  pending_approval: colors.warning + "20",
-  confirmed: colors.info + "20",
-  dispatched: colors.success + "20",
-  delivered: colors.success + "20",
-  cancelled: colors["ember-orange"] + "20",
-};
-
-const statusTextColors: Record<string, string> = {
-  pending_approval: colors.warning,
-  confirmed: colors.info,
-  dispatched: colors.success,
-  delivered: colors.success,
-  cancelled: colors["ember-orange"],
+const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  pending_approval: { bg: "#ffbb26", text: "#ffbb26" },
+  confirmed:       { bg: "#0090ff", text: "#0090ff" },
+  dispatched:      { bg: "#00ca48", text: "#00ca48" },
+  delivered:       { bg: "#00ca48", text: "#00ca48" },
+  cancelled:       { bg: "#ff3e00", text: "#ff3e00" },
 };
 
 export function RecentOrdersList() {
   return (
-    <View style={{ gap: 12, paddingHorizontal: 16 }}>
+    <View className="gap-3 px-4">
       <Text variant="heading-sm" color="charcoal">Recent Orders</Text>
       <FlatList
         data={MOCK_RECENT_ORDERS}
         scrollEnabled={false}
         keyExtractor={(item) => item.id}
-        ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-        renderItem={({ item }) => (
-          <Card>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text variant="label-medium" color="charcoal">{item.shopName}</Text>
-                <Text variant="caption" color="ash">{item.salesmanName}</Text>
-              </View>
-              <View style={{ alignItems: "flex-end", gap: 4 }}>
-                <Text variant="label-medium" color="charcoal">Rs. {item.totalAmount}</Text>
-                <View style={{
-                  backgroundColor: statusBgColors[item.status] || colors["stone-border"],
-                  paddingHorizontal: 8,
-                  paddingVertical: 2,
-                  borderRadius: 9999,
-                }}>
-                  <Text variant="caption" style={{ color: statusTextColors[item.status] || colors.ash }}>
-                    {item.status.replace("_", " ")}
-                  </Text>
+        ItemSeparatorComponent={() => <View className="h-2" />}
+        renderItem={({ item }) => {
+          const statusStyle = STATUS_COLORS[item.status] || { bg: "#f2f0ed", text: "#848281" };
+          return (
+            <Card>
+              <View className="flex-row justify-between items-center">
+                <View className="flex-1 gap-0.5">
+                  <Text variant="label-medium" color="charcoal">{item.shopName}</Text>
+                  <Text variant="caption" color="ash">{item.salesmanName}</Text>
+                </View>
+                <View className="items-end gap-1">
+                  <Text variant="label-medium" color="charcoal">Rs. {item.totalAmount}</Text>
+                  <View
+                    className="px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: statusStyle.bg + "20" }}
+                  >
+                    <Text variant="caption" style={{ color: statusStyle.text }}>
+                      {item.status.replace("_", " ")}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          </Card>
-        )}
+            </Card>
+          );
+        }}
       />
     </View>
   );

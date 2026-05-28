@@ -29,3 +29,5 @@ coverage/
 # Capacitor (future)
 android/
 ios/
+.playwright-mcp/
+login-screen-working.png
