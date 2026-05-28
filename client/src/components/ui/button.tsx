@@ -23,8 +23,8 @@ export function Button({ variant = "primary", loading, children, disabled, style
           gap: 8,
           opacity: pressed || disabled ? 0.7 : 1,
         },
-        style,
-      ]}
+        typeof style === "function" ? style({ pressed }) : style,
+      ] as any}
       disabled={disabled || loading}
       {...props}
     >
