@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import * as SecureStore from "expo-secure-store";
+import { storage } from "../lib/storage";
 import { apiClient } from "../lib/apiClient";
 import type { User } from "../types";
 
@@ -32,8 +32,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       body: { username, password },
     });
 
-    await SecureStore.setItemAsync("accessToken", data.accessToken);
-    await SecureStore.setItemAsync("refreshToken", data.refreshToken);
+    await storage.setItem("accessToken", data.accessToken);
+    await storage.setItem("refreshToken", data.refreshToken);
 
     set({
       token: data.accessToken,
@@ -44,8 +44,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
-    await SecureStore.deleteItemAsync("accessToken");
-    await SecureStore.deleteItemAsync("refreshToken");
+    await storage.deleteItem("accessToken");
+    await storage.deleteItem("refreshToken");
     set({
       token: null,
       refreshToken: null,
@@ -56,8 +56,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   hydrate: async () => {
     try {
-      const token = await SecureStore.getItemAsync("accessToken");
-      const refreshToken = await SecureStore.getItemAsync("refreshToken");
+      const token = await storage.getItem("accessToken");
+      const refreshToken = await storage.getItem("refreshToken");
 
       if (token) {
         const user = await apiClient<User>("/auth/me");
@@ -66,8 +66,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         set({ isLoading: false });
       }
     } catch {
-      await SecureStore.deleteItemAsync("accessToken");
-      await SecureStore.deleteItemAsync("refreshToken");
+      await storage.deleteItem("accessToken");
+      await storage.deleteItem("refreshToken");
       set({ isLoading: false });
     }
   },

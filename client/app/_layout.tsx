@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Stack, router, useSegments } from "expo-router";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { useFonts } from "@expo-google-fonts/inter";
+import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, useFonts } from "@expo-google-fonts/inter";
 import { Fraunces_500Medium } from "@expo-google-fonts/fraunces";
 import { ActivityIndicator, View } from "react-native";
 import { queryClient } from "../src/lib/queryClient";
@@ -31,10 +31,10 @@ function AuthRedirect() {
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    Inter_400: require("@expo-google-fonts/inter/Inter_400.ttf"),
-    Inter_500: require("@expo-google-fonts/inter/Inter_500.ttf"),
-    Inter_600: require("@expo-google-fonts/inter/Inter_600.ttf"),
-    Fraunces_500Medium,
+    Inter_400: Inter_400Regular,
+    Inter_500: Inter_500Medium,
+    Inter_600: Inter_600SemiBold,
+    Fraunces_500: Fraunces_500Medium,
   });
 
   if (!fontsLoaded) {
@@ -49,9 +49,9 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <AuthRedirect />
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
         <Stack.Screen name="login" />
         <Stack.Screen name="(admin)" />
-        <Stack.Screen name="(salesman)" />
       </Stack>
     </QueryClientProvider>
   );

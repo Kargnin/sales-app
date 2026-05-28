@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import { storage } from "./storage";
 import { API_BASE_URL } from "./constants";
 
 interface RequestConfig extends Omit<RequestInit, "body"> {
@@ -27,7 +27,7 @@ export async function apiClient<T = unknown>(
   endpoint: string,
   config: RequestConfig = {},
 ): Promise<T> {
-  const token = await SecureStore.getItemAsync("accessToken");
+  const token = await storage.getItem("accessToken");
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -51,21 +51,21 @@ export async function apiClient<T = unknown>(
     const isAuthEndpoint = endpointLower.startsWith("/auth/refresh") || endpointLower.startsWith("/auth/login");
 
     if (isAuthEndpoint) {
-      await SecureStore.deleteItemAsync("accessToken");
-      await SecureStore.deleteItemAsync("refreshToken");
+      await storage.deleteItem("accessToken");
+      await storage.deleteItem("refreshToken");
       throw new Error("Unauthorized");
     }
 
-    const refreshToken = await SecureStore.getItemAsync("refreshToken");
+    const refreshToken = await storage.getItem("refreshToken");
     if (!refreshToken) {
-      await SecureStore.deleteItemAsync("accessToken");
+      await storage.deleteItem("accessToken");
       throw new Error("Unauthorized");
     }
 
     if (isRefreshing) {
       return new Promise<string>((resolve, reject) => {
         failedQueue.push({ resolve, reject });
-      }).then((newToken) => {
+      }).then(() => {
         return apiClient<T>(endpoint, { ...config, _retry: true });
       });
     }
@@ -85,8 +85,8 @@ export async function apiClient<T = unknown>(
       const newAccessToken = data.accessToken;
       const newRefreshToken = data.refreshToken || refreshToken;
 
-      await SecureStore.setItemAsync("accessToken", newAccessToken);
-      await SecureStore.setItemAsync("refreshToken", newRefreshToken);
+      await storage.setItem("accessToken", newAccessToken);
+      await storage.setItem("refreshToken", newRefreshToken);
 
       isRefreshing = false;
       processQueue(null, newAccessToken);
@@ -95,8 +95,8 @@ export async function apiClient<T = unknown>(
     } catch (refreshError) {
       isRefreshing = false;
       processQueue(refreshError, null);
-      await SecureStore.deleteItemAsync("accessToken");
-      await SecureStore.deleteItemAsync("refreshToken");
+      await storage.deleteItem("accessToken");
+      await storage.deleteItem("refreshToken");
       throw refreshError;
     }
   }
