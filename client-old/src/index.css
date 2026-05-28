@@ -1,0 +1,284 @@
+/* ── All @import statements first (CSS spec requirement) ── */
+@import '@ionic/react/css/core.css';
+@import '@ionic/react/css/normalize.css';
+@import '@ionic/react/css/structure.css';
+@import '@ionic/react/css/typography.css';
+@import "@fontsource-variable/geist";
+@import "leaflet/dist/leaflet.css";
+
+/* ── Tailwind directives ── */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ────────────────────────────────────────────────────────── */
+/*   STITCH DESIGN TOKENS — "Warm Tactile Industrial"            */
+/*   Canvas: warm parchment, Accent: Ember Orange, Flat/inset    */
+/* ────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Ionic Color Overrides ── */
+
+  --ion-color-primary: #121212;
+  --ion-color-primary-rgb: 18, 18, 18;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #0a0a0a;
+  --ion-color-primary-tint: #2d2d2d;
+
+  --ion-color-secondary: #ff3e00;
+  --ion-color-secondary-rgb: 255, 62, 0;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #db3400;
+  --ion-color-secondary-tint: #ff5720;
+
+  --ion-color-tertiary: #f2f0ed;
+  --ion-color-tertiary-rgb: 242, 240, 237;
+  --ion-color-tertiary-contrast: #121212;
+  --ion-color-tertiary-contrast-rgb: 18, 18, 18;
+  --ion-color-tertiary-shade: #d4d2cf;
+  --ion-color-tertiary-tint: #fbfaf9;
+
+  --ion-color-success: #00ca48;
+  --ion-color-success-rgb: 0, 202, 72;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-shade: #00b23f;
+  --ion-color-success-tint: #1acf5a;
+
+  --ion-color-warning: #ffbb26;
+  --ion-color-warning-rgb: 255, 187, 38;
+  --ion-color-warning-contrast: #1a1c1c;
+  --ion-color-warning-shade: #e0a421;
+  --ion-color-warning-tint: #ffc840;
+
+  --ion-color-danger: #ff2b3a;
+  --ion-color-danger-rgb: 255, 43, 58;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-shade: #e02633;
+  --ion-color-danger-tint: #ff404d;
+
+  --ion-color-medium: #848281;
+  --ion-color-medium-rgb: 132, 130, 129;
+  --ion-color-medium-contrast: #ffffff;
+  --ion-color-medium-shade: #747271;
+  --ion-color-medium-tint: #9a9897;
+
+  --ion-color-light: #fbfaf9;
+  --ion-color-light-rgb: 251, 250, 249;
+  --ion-color-light-contrast: #121212;
+  --ion-color-light-shade: #e8e7e6;
+  --ion-color-light-tint: #fcfbfa;
+
+  --ion-color-dark: #121212;
+  --ion-color-dark-rgb: 18, 18, 18;
+  --ion-color-dark-contrast: #ffffff;
+  --ion-color-dark-shade: #0a0a0a;
+  --ion-color-dark-tint: #2d2d2d;
+
+  /* ── Ionic Background & Text ── */
+
+  --ion-background-color: #fbfaf9;
+  --ion-background-color-rgb: 251, 250, 249;
+  --ion-text-color: #474645;
+  --ion-text-color-rgb: 71, 70, 69;
+  --ion-border-color: #f2f0ed;
+  --ion-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* ── Ionic Item (list rows) ── */
+
+  --ion-item-background: #ffffff;
+  --ion-item-border-color: #f2f0ed;
+  --ion-item-color: #474645;
+
+  /* ── Ionic Toolbar ── */
+
+  --ion-toolbar-background: #fbfaf9;
+  --ion-toolbar-border-color: #f2f0ed;
+  --ion-toolbar-color: #343433;
+
+  /* ── Ionic Tab Bar ── */
+
+  --ion-tab-bar-background: #fbfaf9;
+  --ion-tab-bar-border-color: #f2f0ed;
+  --ion-tab-bar-color: #848281;
+  --ion-tab-bar-color-selected: #ff3e00;
+
+  /* ── Ionic Card ── */
+
+  --ion-card-background: #ffffff;
+  --ion-card-border-color: #f2f0ed;
+  --ion-card-border-radius: 10px;
+
+  /* ── Ionic Content ── */
+
+  --ion-content-background: #fbfaf9;
+
+  /* ── Stitch Surface Stack ── */
+  --stitch-canvas: #fbfaf9;
+  --stitch-surface-elevated: #ffffff;
+  --stitch-surface-recessed: #f8f7f4;
+  --stitch-surface-dim: #dadad9;
+  --stitch-stone-border: #f2f0ed;
+
+  /* ── Stitch Text Hierarchy ── */
+  --stitch-text-primary: #474645;
+  --stitch-text-heading: #343433;
+  --stitch-text-muted: #848281;
+  --stitch-text-disabled: #a7a7a7;
+
+  /* ── Stitch Accent: Ember Orange ── */
+  --stitch-accent: #ff3e00;
+  --stitch-accent-light: #db3400;
+  --stitch-accent-dark: #af2800;
+  --stitch-midnight: #121212;
+  --stitch-midnight-container: #1c1b1b;
+
+  /* ── Stitch Semantic ── */
+  --stitch-success: #00ca48;
+  --stitch-info: #0090ff;
+  --stitch-warning: #ffbb26;
+  --stitch-error: #ff2b3a;
+  --stitch-flamingo: #ff58ae;
+  --stitch-violet: #9f4fff;
+
+  /* ── Stitch Typography Scale ── */
+  --stitch-font-display: 'Family', 'Inter', sans-serif;
+  --stitch-font-body: 'Inter', sans-serif;
+
+  /* ── Stitch Spacing Scale (4px base) ── */
+  --stitch-space-2xs: 4px;
+  --stitch-space-xs: 8px;
+  --stitch-space-sm: 12px;
+  --stitch-space-md: 16px;
+  --stitch-space-lg: 24px;
+  --stitch-space-xl: 32px;
+  --stitch-space-2xl: 48px;
+
+  /* ── Stitch Roundness ── */
+  --stitch-radius-sm: 4px;
+  --stitch-radius-default: 8px;
+  --stitch-radius-md: 12px;
+  --stitch-radius-lg: 16px;
+  --stitch-radius-xl: 24px;
+  --stitch-radius-pill: 9999px;
+  --stitch-radius-blob: 72px;
+
+  /* ── Stitch Inset Border (1px stone, no shadow) ── */
+  --stitch-inset-border: 1px solid #f2f0ed;
+
+  /* ── Focus ring ── */
+  --stitch-focus-ring: 0 0 0 2px #fbfaf9, 0 0 0 4px #ff3e00;
+}
+
+/* ────────────────────────────────────────────────────────── */
+/*   Global Reset (minimal — Ionic handles most)                */
+/* ────────────────────────────────────────────────────────── */
+
+html {
+  font-family: var(--stitch-font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--stitch-canvas);
+  color: var(--stitch-text-primary);
+}
+
+/* ────────────────────────────────────────────────────────── */
+/*   Ionic Component Fine-tuning                                */
+/* ────────────────────────────────────────────────────────── */
+
+/* Flat cards with inset borders — no shadows */
+ion-card {
+  box-shadow: none;
+  border: var(--stitch-inset-border);
+  border-radius: 10px;
+}
+
+/* Pill-shaped primary buttons */
+ion-button {
+  --border-radius: 9999px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+/* Tab bar styling — warm canvas, ember active */
+ion-tab-bar {
+  --background: var(--stitch-canvas);
+  border-top: 1px solid var(--stitch-stone-border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+ion-tab-button {
+  --color: var(--stitch-text-muted);
+  --color-selected: var(--stitch-accent);
+}
+
+/* Toolbar */
+ion-toolbar {
+  --background: var(--stitch-canvas);
+  --color: var(--stitch-text-heading);
+  --border-color: var(--stitch-stone-border);
+}
+
+/* Menu drawer */
+ion-menu {
+  --background: var(--stitch-surface-elevated);
+  --ion-background-color: var(--stitch-surface-elevated);
+}
+
+ion-menu ion-item {
+  --background: transparent;
+  --color: var(--stitch-text-primary);
+  --border-color: transparent;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+ion-menu ion-item.active {
+  --color: var(--stitch-accent);
+  --background: rgba(255, 62, 0, 0.06);
+  border-right: 3px solid var(--stitch-accent);
+}
+
+/* Split pane */
+ion-split-pane {
+  --side-width: 280px;
+  --border: var(--stitch-stone-border);
+}
+
+/* ────────────────────────────────────────────────────────── */
+/*   Utility Classes                                            */
+/* ────────────────────────────────────────────────────────── */
+
+.stitch-card {
+  background: var(--stitch-surface-elevated);
+  border: var(--stitch-inset-border);
+  border-radius: 10px;
+  padding: var(--stitch-space-md);
+}
+
+.stitch-card-recessed {
+  background: var(--stitch-surface-recessed);
+  border: var(--stitch-inset-border);
+  border-radius: 10px;
+  padding: var(--stitch-space-md);
+}
+
+.stitch-divider {
+  border: none;
+  border-top: 1px solid var(--stitch-stone-border);
+  margin: var(--stitch-space-md) 0;
+}
+
+.stitch-pill {
+  border-radius: var(--stitch-radius-pill);
+}
+
+/* Focus ring for accessibility */
+.stitch-focus:focus-visible {
+  box-shadow: var(--stitch-focus-ring);
+  outline: none;
+}

@@ -9,3 +9,11 @@ Search the web for best practices for both server as well as client side.
 Always think about the structure/low-level design of a component first, extract out common rendering components, just pass the input data for the component to render, keep the business logic separate from UI.
 
 We should be able to change UI components easily without affecting the application.
+
+Target: React Native + Expo with Expo Router for both iOS and Android (Android primary).
+
+Use Expo and React Native related skills whenever possible.
+
+For UI design use Stitch MCP to fetch app page designs.
+
+Stitch project ID: 2048573934882273867

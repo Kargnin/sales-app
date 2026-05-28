@@ -1,0 +1,7 @@
+- [x] Hide generic menu button and enable custom interactive mascot avatar
+- [x] Refactor dashboard top bar (mascot, greeting font, thin-bordered outline notification bell)
+- [x] Implement borderless transparent overview stat cards with custom colors (orange "8" pending approvals) and correct trend/subtext icons
+- [x] Build flat borderless recent visits timeline with initials avatars, storefront icons, completed/in-progress styling, and seeded mockup visits fallback
+- [x] Verify solid black pill floating "+ New Product" button styling
+- [x] Update bottom tab bar styling (flat canvas, no shadow, coral-red selected color, inactive gray outline, auto-filled active icons)
+- [x] Perform manual and automated builds/checks to verify zero TypeScript or compilation errors

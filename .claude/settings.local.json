@@ -19,7 +19,8 @@
       "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/impeccable/agents/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/impeccable/agents/\")",
       "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/impeccable/scripts/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/impeccable/scripts/\")",
       "Bash(cp -r \"/Users/bhushanmalani/Code/Sales App/.agents/skills/impeccable/reference/.\" \"/Users/bhushanmalani/Code/Sales App/.claude/skills/impeccable/reference/\")",
-      "WebSearch"
+      "WebSearch",
+      "mcp__stitch__list_projects"
     ]
   }
 }

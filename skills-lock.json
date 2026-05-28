@@ -1,17 +1,131 @@
 {
   "version": 1,
   "skills": {
+    "grill-with-docs": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/grill-with-docs/SKILL.md",
+      "computedHash": "a5c65e76275008b469962f7bee8b34866f1c9b0709f4886e71c8e731735640e4"
+    },
+    "handoff": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/productivity/handoff/SKILL.md",
+      "computedHash": "1a78d774f8a59db5daa6e65e20a6596872fa8cde769f9a6e3a09b678dd5ae8cc"
+    },
     "impeccable": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "skillPath": "skill/SKILL.md",
       "computedHash": "34e59a34b9705187e87039faa5d9585aebe0056ef657f761b905afef276a3362"
     },
+    "improve-codebase-architecture": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
+      "computedHash": "ef32aea0a8fab9b365ff9e08a95f8d353e20ca21ea46ec2e73587c86dd341351"
+    },
+    "ionic-analytics": {
+      "source": "erkamyaman/ionic-capacitor-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ionic-analytics/SKILL.md",
+      "computedHash": "8746747c66a0c351063d381ecf73c307be5696c57ca75716b536fb3048c4575c"
+    },
+    "ionic-app-icon-splash": {
+      "source": "erkamyaman/ionic-capacitor-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ionic-app-icon-splash/SKILL.md",
+      "computedHash": "bb59fd9a28ccd5149170ad2c21a1d411d9b350e51333de2d2190bd145ff48c3d"
+    },
+    "ionic-apple-sign-in": {
+      "source": "erkamyaman/ionic-capacitor-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ionic-apple-sign-in/SKILL.md",
+      "computedHash": "195c00423ca89028a540439f01150c7b19de9ac06552a712a7e31118439eed43"
+    },
+    "ionic-att": {
+      "source": "erkamyaman/ionic-capacitor-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ionic-att/SKILL.md",
+      "computedHash": "c2b5647e832104eda707dff0c3f9e489142ca01c874a1842e4d8c0f0e31c4406"
+    },
+    "ionic-biometric-auth": {
+      "source": "erkamyaman/ionic-capacitor-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ionic-biometric-auth/SKILL.md",
+      "computedHash": "ab9211f4ee20cbd2d10015ec69a85da78eb95a5484cdb27233db7e6961a49d41"
+    },
+    "ionic-deep-links": {
+      "source": "erkamyaman/ionic-capacitor-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ionic-deep-links/SKILL.md",
+      "computedHash": "f301e4d2e5fd202857f333f575ac9383ea9474205cf7fbd2a57968eef20c5bba"
+    },
+    "ionic-in-app-review": {
+      "source": "erkamyaman/ionic-capacitor-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ionic-in-app-review/SKILL.md",
+      "computedHash": "b3233e4de9524c4bf054bf7d085af0a4e91502dad24df7479bd8a1345027c0ce"
+    },
+    "ionic-local-notifications": {
+      "source": "erkamyaman/ionic-capacitor-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ionic-local-notifications/SKILL.md",
+      "computedHash": "4354c9f6d97fcb5aea48ba9138a908aeffe05131b8ae530f89db66dfbe66cc46"
+    },
+    "ionic-native-essentials": {
+      "source": "erkamyaman/ionic-capacitor-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ionic-native-essentials/SKILL.md",
+      "computedHash": "21da6c6fbcc96fae5d61406a47ee8422b845ed7d70a542954ad257fe32cda021"
+    },
+    "ionic-react": {
+      "source": "erkamyaman/ionic-capacitor-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ionic-react/SKILL.md",
+      "computedHash": "20a892d179f289838b8733c47d7ba81c41e842b6170d2a1f8e9aa2e7208ff158"
+    },
+    "ionic-shared": {
+      "source": "erkamyaman/ionic-capacitor-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ionic-shared/SKILL.md",
+      "computedHash": "50d21962eadb39accfd60582c4f4e8fc56db36d3aa9e502c0917dc77c0ade730"
+    },
+    "react-native-best-practices": {
+      "source": "callstackincubator/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-native-best-practices/SKILL.md",
+      "computedHash": "15bd57b18d9ad0dcd003bd2c7ec6ed17d813cc671dd4d423e1d904d2a7b9d2bb"
+    },
+    "react-native-brownfield-migration": {
+      "source": "callstackincubator/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-native-brownfield-migration/SKILL.md",
+      "computedHash": "06fd211ff8a28733f0d82853361ed7ab6e215aba18593e2195aebebea33f9c26"
+    },
     "shadcn": {
       "source": "shadcn/ui",
       "sourceType": "github",
       "skillPath": "skills/shadcn/SKILL.md",
       "computedHash": "80a6226e78f6d1fe464214ae0ef449d49d8ffaa3e7704f011e9b418c678ad4d1"
+    },
+    "tdd": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/tdd/SKILL.md",
+      "computedHash": "15a7b5e36383ebadb2dec5e586679e55e9663d292da418926b8da6fc0ef27d84"
+    },
+    "upgrading-react-native": {
+      "source": "callstackincubator/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/upgrading-react-native/SKILL.md",
+      "computedHash": "a8a0b9ce54dceb45233c3244dfe9aafc43f3cb9f4dad8c466f4091fe4065cdc9"
+    },
+    "validate-skills": {
+      "source": "callstackincubator/agent-skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/validate-skills/SKILL.md",
+      "computedHash": "aff52c5f1470ceedfa83c6bd7936b5bf70d347d72724585e3a2911d6d009caf4"
     }
   }
 }

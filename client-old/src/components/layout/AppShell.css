@@ -1,0 +1,431 @@
+/* ────────────────────────────────────────────────────────── */
+/*   App Shell — Menu Drawer, Tabs, Layout                      */
+/* ────────────────────────────────────────────────────────── */
+
+/* ── Menu Drawer ─────────────────────────────────────── */
+
+.menu-toolbar {
+  --background: var(--stitch-surface-elevated);
+  --color: var(--stitch-text-heading);
+  padding-top: env(safe-area-inset-top);
+}
+
+.menu-mascot-container {
+  display: flex;
+  justify-content: center;
+  padding: var(--stitch-space-lg) 0 var(--stitch-space-md);
+}
+
+.menu-mascot {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mascot-svg {
+  width: 64px;
+  height: 64px;
+}
+
+.menu-content {
+  --background: var(--stitch-surface-elevated);
+}
+
+.menu-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--stitch-space-sm);
+  padding: var(--stitch-space-md) var(--stitch-space-lg);
+  margin: 0 var(--stitch-space-md) var(--stitch-space-md);
+  background: var(--stitch-surface-recessed);
+  border: var(--stitch-inset-border);
+  border-radius: var(--stitch-radius-default);
+  cursor: pointer;
+}
+
+.menu-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--stitch-radius-pill);
+  background: var(--stitch-midnight);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.menu-profile-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.menu-username {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--stitch-text-heading);
+}
+
+.menu-role {
+  font-size: 12px;
+  color: var(--stitch-accent);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.menu-list {
+  background: transparent;
+  padding: 0;
+}
+
+.menu-section-header {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--stitch-text-muted);
+  padding: var(--stitch-space-md) var(--stitch-space-lg) var(--stitch-space-xs);
+}
+
+.menu-item {
+  --background: transparent;
+  --background-hover: rgba(255, 62, 0, 0.04);
+  --color: var(--stitch-text-primary);
+  --border-color: transparent;
+  --padding-start: var(--stitch-space-lg);
+  --padding-end: var(--stitch-space-lg);
+  --inner-padding-end: 0;
+  --min-height: 48px;
+  font-size: 15px;
+  font-weight: 500;
+  --ripple-color: var(--stitch-accent);
+}
+
+.menu-item-active {
+  --color: var(--stitch-accent);
+  --background: rgba(255, 62, 0, 0.06);
+  border-right: 3px solid var(--stitch-accent);
+  font-weight: 600;
+}
+
+.menu-item-active ion-icon {
+  color: var(--stitch-accent);
+}
+
+.menu-item-logout {
+  --color: var(--stitch-error);
+  margin-top: var(--stitch-space-sm);
+}
+
+.menu-item-logout ion-icon {
+  color: var(--stitch-error);
+}
+
+.menu-secondary {
+  border-top: 1px solid var(--stitch-stone-border);
+  margin-top: var(--stitch-space-md);
+  padding-top: var(--stitch-space-xs);
+}
+
+/* ── Tab Bar ─────────────────────────────────────────── */
+
+ion-tab-bar {
+  --background: var(--stitch-canvas);
+  border-top: 1px solid var(--stitch-stone-border);
+  padding-bottom: env(safe-area-inset-bottom);
+  height: 56px;
+}
+
+ion-tab-button {
+  --color: var(--stitch-text-muted);
+  --color-selected: var(--stitch-accent);
+  --ripple-color: var(--stitch-accent);
+}
+
+ion-tab-button.tab-selected {
+  --color: var(--stitch-accent);
+}
+
+/* Remove default browser outlines and underlines from slotted tab contents and the native anchor button inside shadow root */
+ion-tab-button,
+ion-tab-button::part(native) {
+  text-decoration: none !important;
+}
+
+/* ── Split Pane ──────────────────────────────────────── */
+
+ion-split-pane {
+  --side-width: 280px;
+  --side-max-width: 320px;
+}
+
+/* ── Content Area ────────────────────────────────────── */
+
+ion-content.main-content {
+  --background: var(--stitch-canvas);
+}
+
+/* ── Page Header ─────────────────────────────────────── */
+
+.page-toolbar {
+  --background: var(--stitch-canvas);
+  --color: var(--stitch-text-heading);
+  --border-color: var(--stitch-stone-border);
+  --padding-start: var(--stitch-space-md);
+  --padding-end: var(--stitch-space-md);
+}
+
+.page-header-mascot {
+  width: 32px;
+  height: 32px;
+  margin-right: var(--stitch-space-xs);
+}
+
+.page-title {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.25px;
+  color: var(--stitch-text-heading);
+}
+
+/* ── Greeting ────────────────────────────────────────── */
+
+.greeting-text {
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: -0.44px;
+  color: var(--stitch-text-heading);
+  margin-bottom: var(--stitch-space-2xs);
+}
+
+.greeting-subtitle {
+  font-size: 15px;
+  color: var(--stitch-text-muted);
+  font-weight: 400;
+}
+
+/* ── Stat Cards ──────────────────────────────────────── */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--stitch-space-sm);
+  padding: var(--stitch-space-md) 0;
+}
+
+@media (min-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stat-card {
+  background: var(--stitch-surface-elevated);
+  border: var(--stitch-inset-border);
+  border-radius: 10px;
+  padding: var(--stitch-space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--stitch-space-xs);
+}
+
+.stat-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--stitch-radius-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.stat-card-icon.ember {
+  background: rgba(255, 62, 0, 0.08);
+  color: var(--stitch-accent);
+}
+
+.stat-card-icon.midnight {
+  background: rgba(18, 18, 18, 0.06);
+  color: var(--stitch-midnight);
+}
+
+.stat-card-icon.success {
+  background: rgba(0, 202, 72, 0.08);
+  color: var(--stitch-success);
+}
+
+.stat-card-icon.info {
+  background: rgba(0, 144, 255, 0.08);
+  color: var(--stitch-info);
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--stitch-text-heading);
+  line-height: 1.1;
+}
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--stitch-text-muted);
+}
+
+.stat-badge {
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stat-badge.up {
+  color: var(--stitch-success);
+}
+
+/* ── Visit / List Rows ───────────────────────────────── */
+
+.visit-row {
+  display: flex;
+  align-items: center;
+  gap: var(--stitch-space-sm);
+  padding: var(--stitch-space-sm) 0;
+  border-bottom: 1px solid var(--stitch-stone-border);
+}
+
+.visit-row:last-child {
+  border-bottom: none;
+}
+
+.visit-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--stitch-radius-pill);
+  background: var(--stitch-midnight);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.visit-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.visit-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--stitch-text-heading);
+}
+
+.visit-shop {
+  font-size: 13px;
+  color: var(--stitch-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.visit-status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--stitch-radius-pill);
+}
+
+.visit-status.completed {
+  background: rgba(0, 202, 72, 0.08);
+  color: var(--stitch-success);
+}
+
+.visit-status.in-progress {
+  background: rgba(255, 187, 38, 0.08);
+  color: var(--stitch-warning);
+}
+
+.visit-time {
+  font-size: 12px;
+  color: var(--stitch-text-muted);
+  flex-shrink: 0;
+}
+
+/* ── Section Headers ─────────────────────────────────── */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--stitch-space-lg) 0 var(--stitch-space-sm);
+}
+
+.section-title {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.25px;
+  color: var(--stitch-text-heading);
+}
+
+.section-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--stitch-accent);
+  text-decoration: none;
+}
+
+/* ── Page Padding ────────────────────────────────────── */
+
+.page-padding {
+  padding: var(--stitch-space-md);
+}
+
+@media (min-width: 768px) {
+  .page-padding {
+    padding: var(--stitch-space-lg) var(--stitch-space-xl);
+  }
+}
+
+/* ── Loading / Error States ──────────────────────────── */
+
+.state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--stitch-space-2xl);
+  gap: var(--stitch-space-md);
+  color: var(--stitch-text-muted);
+}
+
+.state-container ion-spinner {
+  color: var(--stitch-accent);
+}
+
+/* ── Notification Bell ───────────────────────────────── */
+
+.notification-bell {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--stitch-radius-pill);
+  background: var(--stitch-accent);
+}
+
