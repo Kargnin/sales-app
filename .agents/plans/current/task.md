@@ -1,7 +1,26 @@
-- [x] Hide generic menu button and enable custom interactive mascot avatar
-- [x] Refactor dashboard top bar (mascot, greeting font, thin-bordered outline notification bell)
-- [x] Implement borderless transparent overview stat cards with custom colors (orange "8" pending approvals) and correct trend/subtext icons
-- [x] Build flat borderless recent visits timeline with initials avatars, storefront icons, completed/in-progress styling, and seeded mockup visits fallback
-- [x] Verify solid black pill floating "+ New Product" button styling
-- [x] Update bottom tab bar styling (flat canvas, no shadow, coral-red selected color, inactive gray outline, auto-filled active icons)
-- [x] Perform manual and automated builds/checks to verify zero TypeScript or compilation errors
+# Task Checklist: Stitch-Style Admin Dashboard & Login UI Redesign
+
+- [x] Setup & Assets Localization
+  - [x] Download mascot illustrations (`mascot_partner.png` and `mascot_welcome.png`) from Stitch URLs to `client/assets/`
+- [x] Shared Schema & Backend Implementation
+  - [x] Update shared `loginSchema` in `packages/shared/src/schemas/auth.schemas.ts` to accept username/email and update validation message
+  - [x] Modify `server/src/routes/auth.routes.ts` login handler to query user by `username` or `email` and return generic "Invalid credentials." error
+  - [x] Implement `server/src/routes/dashboard.routes.ts` with `GET /metrics`, auth middleware, and role-based scoping (admin gets tenant aggregate, salesman gets filtered data)
+  - [x] Register dashboard routes in `server/src/index.ts`
+  - [x] Write integration tests in `server/src/__tests__/auth.test.ts` (email login) and `server/src/__tests__/dashboard.test.ts` (metrics role-scoping)
+- [x] Client Types & Data Hooks
+  - [x] Add `pendingApprovals` field to `DashboardMetrics` interface in `client/src/types/index.ts`
+  - [x] Update `useDashboardMetrics.ts` query to fetch from `/api/dashboard/metrics`
+- [x] Client UI Redesign
+  - [x] Redesign `LoginForm` in `client/src/features/auth/login-form.tsx` to match Stitch layout (mascot header, heart overlay, borderless inputs with envelope/lock inline icons, toggle eye, forgot password native Alert, underlined footer)
+  - [x] Redesign `MetricsGrid` in `client/src/features/dashboard/metrics-grid.tsx` with a 2x2 wrapping grid, 10px rounded borders, loading skeletons, and error boundary handling
+  - [x] Create `RecentVisitsList` in `client/src/features/dashboard/recent-visits-list.tsx` to fetch check-ins via `useVisits` and render initials avatars, styled completed/in-progress tags, and loading/empty states
+  - [x] Redesign `DashboardScreen` in `client/app/(admin)/dashboard.tsx` with wobbly mascot header, time-based dynamic greeting, and floating "+ New Product" FAB pill
+- [x] Strict NativeWind v5 and React Native Styling Refactoring
+  - [x] Refactor core UI components (`text.tsx`, `card.tsx`, `button.tsx`, `input.tsx`) to remove hardcoded hex values, JS style objects, and `colorMap` mappings, relying exclusively on Tailwind classNames and theme variables.
+  - [x] Clean up screen router templates (`dashboard.tsx`, `index.tsx`, `_layout.tsx`, and all indices under `(admin)/` - orders, shops, team, more) to eliminate custom stylesheets and inline styles, replacing them with Tailwind classNames.
+  - [x] Refactor all feature components (`LoginForm`, `MetricsGrid`, `RecentVisitsList`, `RecentOrdersList`) to use Tailwind text and background color classes instead of custom style objects or custom color props.
+- [x] Verification & Testing
+  - [x] Run client-side type checking (`cd client && npx tsc --noEmit`)
+  - [x] Run server-side type checking (`cd server && npx tsc --noEmit`)
+  - [x] Execute server integration tests (`npx vitest run ...` -> 18 of 18 passed)

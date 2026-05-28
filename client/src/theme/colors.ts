@@ -1,0 +1,16 @@
+export const colors = {
+  canvas: "#fbfaf9",
+  surface: "#ffffff",
+  "surface-recessed": "#f8f7f4",
+  "stone-border": "#f2f0ed",
+  graphite: "#474645",
+  charcoal: "#343433",
+  ash: "#848281",
+  midnight: "#121212",
+  "ember-orange": "#ff3e00",
+  "mascot-peach": "#ffdad2",
+  "mascot-sand": "#d1bba4",
+  success: "#00ca48",
+  info: "#0090ff",
+  warning: "#ffbb26",
+};

@@ -5,6 +5,7 @@ export const MOCK_DASHBOARD_METRICS: DashboardMetrics = {
   totalOrders: 342,
   totalVisits: 1204,
   activeSalesmen: 8,
+  pendingApprovals: 8,
   revenueChange: 12.5,
   ordersChange: 8.1,
   visitsChange: -3.2,

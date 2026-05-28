@@ -1,59 +1,75 @@
-# Plan Review — Stitch-Style Admin Dashboard Redesign
+# Plan Review — Stitch-Style Admin Dashboard & Login UI Redesign
 
 ## Verdict: CHANGES REQUESTED
 
-The plan has the right general direction, but has 2 correctness/consistency issues that need resolution before implementation, plus several underspecified mechanics.
-
 ## Strengths
-- The scope is well-focused: visual redesign of the admin dashboard only, no architectural refactoring
-- All changes are localized to 3 files (`PageLayout.tsx`, `AdminDashboardPage.tsx`, `AppShell.tsx`/`.css`) with clear per-file descriptions
-- The plan correctly identifies which styling tokens need updating (stat cards, visit list, tab bar)
-- The mock-seed fallback idea for capturing the exact design look is noted, though needs a guard (see below)
+- Good separation of concerns: backend metrics endpoint is independent from frontend visual redesign, allowing either to be iterated independently
+- Reuses existing infrastructure (`apiClient`, TanStack Query, `useVisits` hook pattern) rather than introducing new data-fetching patterns
+- Plan correctly identifies the need to update the shared `loginSchema` and auth error messages when switching to email-or-username login
+- Design tokens reference the existing Stitch "Warm Tactile Industrial" system, maintaining consistency with the rest of the app
 
 ## Issues to Address
 
-### 1. CRITICAL: Mock data must be gated behind dev-mode check
-- **Location**: Plan section 4 — "Seeded Mock Data Fallback"
-- **Problem**: The plan proposes injecting fake visits (John Doe, Alice Smith, Robert Jones) as a fallback when the live database is empty. Without a dev-mode gate, real users with genuinely empty visit histories will see fabricated data — this is a data integrity issue.
-- **Suggestion**: Gate the seed data behind `import.meta.env.DEV` (Vite's built-in env flag), or use a separate `showMockData` const that defaults to `false`. The seed data should only render in local development, never in production. Example:
+### 1. CRITICAL: Missing Auth Middleware on Dashboard Route
+- **Location**: `server/src/routes/dashboard.routes.ts` (new)
+- **Problem**: The plan doesn't mention applying `authenticate` and `tenantScope` middleware to the new dashboard routes. Every other route file (`visits.routes.ts:14`, `shops.routes.ts`, `orders.routes.ts`) uses `router.use(authenticate, tenantScope)`. Without this, the metrics endpoint would be publicly accessible.
+- **Suggestion**: Add `router.use(authenticate, tenantScope)` at the top of the dashboard router, matching the pattern in `visits.routes.ts:14`.
 
-```tsx
-const useMockVisits = import.meta.env.DEV && recentVisits.length === 0;
-const displayVisits = useMockVisits ? MOCK_VISITS : recentVisits;
-```
+### 2. CRITICAL: Missing Role-Based Scoping for Metrics
+- **Location**: `server/src/routes/dashboard.routes.ts` (new) — `GET /metrics`
+- **Problem**: The plan says "scoped to the logged-in user's tenantId" but doesn't address role-based scoping. An admin should see all tenant data; a salesman should only see their own orders/visits. The existing `visits.routes.ts:28-30` demonstrates this pattern: admins get full tenant scope, salesmen get filtered to their own `salesmanId`.
+- **Suggestion**: After `tenantScope` middleware sets `req.user.tenantId`, check `req.user.role`. For salesmen, filter revenue/visits by `salesmanId = req.user.sub`. For admins, aggregate across the full tenant.
 
-### 2. CRITICAL: Use CSS custom properties, not hardcoded hex values
-- **Location**: Plan sections 3, 4, 5, 6 — all color values
-- **Problem**: The plan specifies raw hex colors (`#121212`, `#848281`, `#ff3e00`, `#FF9F0A`) throughout. The project already has a Stitch design token system via `var(--stitch-*)` CSS custom properties used consistently everywhere. Hardcoding hex values breaks the theming system and creates a maintenance split — changing the brand color would require hunting down hex values instead of updating one CSS variable.
-- **Suggestion**: Map all colors to existing Stitch tokens:
-  - `#121212` (black) → `var(--stitch-text-heading)` or `var(--stitch-midnight)`
-  - `#848281` (gray) → `var(--stitch-text-muted)`
-  - `#ff3e00`/`#af2800` (coral-red) → `var(--stitch-accent)` or `var(--stitch-secondary)`
-  - `#FF9F0A`/`#D97706` (orange) → `var(--stitch-warning)` (if it exists) or define a new `--stitch-pending` token in CSS
-  - `#F2F0ED` (light gray) → `var(--stitch-stone-border)` or `var(--stitch-surface-recessed)`
-- If the exact Stitch design requires colors not yet in the token set, **add the tokens to `AppShell.css`** rather than inlining them.
+### 3. CRITICAL: Shared Type Missing `pendingApprovals` Field
+- **Location**: `client/src/types/index.ts` — `DashboardMetrics` interface (line 76-84)
+- **Problem**: The plan introduces a "Pending Approvals" metric card but `DashboardMetrics` has no `pendingApprovals` field. The backend endpoint needs to return it, and the type needs to include it.
+- **Suggestion**: Add `pendingApprovals: number` to the `DashboardMetrics` interface. The backend computes it via `count of shops where status = 'pending_approval'`.
 
-### 3. MODERATE: Avatar → menu click wiring is underspecified
-- **Location**: Plan sections 1 and 2 — `PageLayout.tsx` and avatar interaction
-- **Problem**: The plan says to add `onAvatarClick` prop to `PageLayout` and have the mascot avatar trigger the side menu. But `PageLayout` has no access to the menu controller or menu ref (that's in `AppShell.tsx`). The plan doesn't explain the mechanism: does it use `menuController` from `@ionic/react`, or does it need a callback passed down from `AppShell`?
-- **Suggestion**: Use Ionic's `menuController` — it's a global singleton that works anywhere. Import it in `AdminDashboardPage.tsx` and call `menuController.toggle()` on avatar click. This avoids threading a callback through `PageLayout`. Alternatively, keep the `IonMenuButton` visible and skip the `hideMenuButton`/`onAvatarClick` complexity entirely — the hamburger menu button is a standard, recognizable pattern that doesn't detract from the design.
+### 4. CRITICAL: Login Schema Validation Message is Misleading
+- **Location**: `packages/shared/src/schemas/auth.schemas.ts:15` — `loginSchema`
+- **Problem**: The current schema validates a `username` field with message "Username is required." If the backend now accepts either username or email in that field, the validation message is misleading when the user enters an email. The plan mentions updating the backend but not the shared schema.
+- **Suggestion**: Update the field to accept either, and change the validation message to "Username or email is required." Also update the auth route error message from "Invalid username or password" to "Invalid credentials."
 
-### 4. MODERATE: StatCard color configurability
-- **Location**: Plan section 3 — Pending Approvals stat
-- **Problem**: The plan hardcodes "orange" for the Pending Approvals value specifically. If the component is reused elsewhere (or for the SalesmanDashboard later), this special-casing won't scale.
-- **Suggestion**: Add an optional `valueColor?: string` prop to the inline `StatCard` component. Pass `var(--stitch-warning)` for Pending Approvals, default to `var(--stitch-text-heading)` for others. This keeps the component generic while achieving the design requirement.
+### 5. CRITICAL: `useVisits` Hook Referenced But Doesn't Exist
+- **Location**: `client/src/features/dashboard/recent-visits-list.tsx` (new)
+- **Problem**: The plan says to use the `useVisits` hook, but `client/src/hooks/useVisits.ts` doesn't exist. The plan should either create this hook or fetch visits inline.
+- **Suggestion**: Create `client/src/hooks/queries/useVisits.ts` using TanStack Query `useQuery` to call `GET /api/visits` via `apiClient`, following the same pattern as `useDashboardMetrics.ts`.
 
-### 5. LOW: Complete removal of stat card backgrounds may hurt readability
-- **Location**: Plan section 3 — "completely strip the StatCard component of its elevated background, borders, and box shadow"
-- **Problem**: Fully transparent stat cards rely entirely on the page background for contrast. If the background is `#fbfaf9` (var(--stitch-canvas)), white text or light-colored values could become hard to read. The current card backgrounds provide guaranteed contrast.
-- **Suggestion**: Test with the actual page background. If contrast is sufficient, proceed. If not, use an extremely subtle background like `background: rgba(255,255,255,0.4)` or keep the cards but remove only the border and shadow. Accessibility needs sufficient contrast ratios (4.5:1 for normal text).
+### 6. MODERATE: External Image URLs Are a Reliability Risk
+- **Location**: `client/app/(admin)/dashboard.tsx` and `client/src/features/auth/login-form.tsx`
+- **Problem**: The mascot illustrations are loaded from `lh3.googleusercontent.com/aida-public/...` URLs. These are external, long, unversioned URLs that could break or be slow to load. If the URL breaks, both the login page and dashboard header will show a broken image.
+- **Suggestion**: Download these images to `client/assets/images/` and reference them locally. If keeping remote URLs, add a fallback placeholder (initials circle) for when the image fails to load.
 
-### 6. LOW: Re-learn from previous audit — watch for dead imports and duplicate components
-- **Location**: General — all file changes
-- **Problem**: The previous audit cycle found: (a) dead Ionic imports left after extracting `PageLayout`, (b) duplicate `StatCard`/`VisitRow` definitions between admin and salesman dashboards. This plan modifies the inline admin dashboard components again without extracting shared versions. The dead-imports issue from the last cycle was already fixed, but new changes to props/imports could reintroduce it.
-- **Suggestion**: After implementation, run `npx tsc --noEmit --noUnusedLocals` to catch leftover imports. For the duplicate components, consider this a follow-up task rather than blocking this styling pass.
+### 7. MODERATE: Static Greeting Text
+- **Location**: `client/app/(admin)/dashboard.tsx` — header
+- **Problem**: "Good morning, Partner" is hardcoded. At 3 PM this reads as incorrect.
+- **Suggestion**: Derive the greeting from the current hour: "Good morning" (5-11), "Good afternoon" (12-17), "Good evening" (18-4). A simple `useMemo` with `new Date().getHours()` suffices.
+
+### 8. MODERATE: Missing Error/Empty/Loading States in New Components
+- **Location**: `client/src/features/dashboard/recent-visits-list.tsx` (new) and `client/src/features/dashboard/metrics-grid.tsx` (modified)
+- **Problem**: The plan describes the happy path (data loaded, cards rendered) but doesn't address:
+  - What renders while metrics are loading
+  - What renders when the API errors out
+  - What the recent visits list shows when there are zero visits
+- **Suggestion**: Use TanStack Query's `isLoading` state to render skeleton placeholders. Add an empty state component for when the visits array is empty. The `MetricsGrid` currently returns `null` when data is undefined — consider a loading skeleton instead.
+
+### 9. MODERATE: "Forgot Password" Implementation is Vague
+- **Location**: `client/src/features/auth/login-form.tsx`
+- **Problem**: The plan says "wire it up to display a beautiful custom React Native alert with password recovery instructions (and/or provide a basic screen flow if needed)." "Custom React Native alert" is ambiguous — likely means `Alert.alert()` from React Native, but that can't render styled content.
+- **Suggestion**: Commit to one approach: either use React Native's `Alert.alert()` for a simple message ("Contact your admin to reset your password"), or build a proper `ForgotPasswordScreen` with an email input and API endpoint. The plan should decide before implementation.
+
+### 10. LOW: Plan-Task Misalignment on Card Styling
+- **Location**: `task.md` vs `implementation_plan.md`
+- **Problem**: The task checklist mentions "borderless transparent overview stat cards" and "flat borderless recent visits timeline" but the plan describes cards with "bg-white, 1px border (#f2f0ed), 10px rounded corners." These are contradictory — borderless vs bordered. The implementing agent won't know which to follow.
+- **Suggestion**: Reconcile these. If the Stitch designs show bordered cards, update the task checklist. If they're borderless, update the plan.
+
+### 11. LOW: No Test Plan for New Backend Endpoint
+- **Location**: Verification Plan section
+- **Problem**: The verification only lists `npx tsc --noEmit` checks. A new backend endpoint with business logic (metrics computation) and redesigned auth flow (email-or-username login) should have tests. The project already has test infrastructure (`packages/shared/src/__tests__/schemas.test.ts`).
+- **Suggestion**: Add at minimum: (1) a test for the login endpoint accepting email in the username field, (2) a test for the dashboard metrics endpoint returning correctly scoped data per role.
 
 ## Optional Improvements
-- The `IonFab` positioning could use `--offset-bottom` to avoid overlapping with the tab bar (currently, `margin: '16px'` might not be enough on devices with safe areas).
-- The "View All" link in Recent Visits points to `/visits` — verify this route exists and renders correctly.
-- Consider extracting the tab bar styling into `AppShell.css` fully (currently the tab bar in `AppShell.tsx` has mixed inline styles and CSS class references).
+- **Time-formatting for visits**: The plan mentions "10:45 AM" format. Consider using `Intl.DateTimeFormat` for locale-aware time formatting rather than hardcoding a 12-hour format.
+- **The FAB "New Product" action**: Consider whether this should navigate to product creation or open a quick-action menu. The dashboard FAB is prime real estate and a single action may underuse it.
+- **Font loading**: The Fraunces font for "Welcome back" needs to be loaded in the Expo project. Consider using `expo-font` with `useFonts` hook, and note that serif fonts increase bundle size.
+- **Password visibility toggle**: The plan mentions adding a visibility toggle to the password input. Confirm that the existing `Input` component supports a `rightIcon` or `secureTextEntry` toggle prop — if not, the Input component may need extending too.

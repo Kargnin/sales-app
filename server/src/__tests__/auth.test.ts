@@ -15,6 +15,7 @@ describe('Auth, RBAC & Multi-Tenancy Integration', () => {
   const tenantAUsername = `admin_a_${uuidv4().substring(0, 8)}`;
   const tenantBUsername = `admin_b_${uuidv4().substring(0, 8)}`;
   const salesmanUsername = `sales_a_${uuidv4().substring(0, 8)}`;
+  const tenantAEmail = `admin_a_${uuidv4().substring(0, 8)}@soap.com`;
 
   it('1. Business Registration - Successful', async () => {
     const res = await request(app)
@@ -23,7 +24,7 @@ describe('Auth, RBAC & Multi-Tenancy Integration', () => {
         businessName: 'Tenant A Soap Co',
         username: tenantAUsername,
         password: 'password123',
-        email: 'admin_a@soap.com',
+        email: tenantAEmail,
         phone: '9999999991',
       });
 
@@ -78,6 +79,19 @@ describe('Auth, RBAC & Multi-Tenancy Integration', () => {
     expect(res.body.user.username).toBe(tenantAUsername);
   });
 
+  it('4b. Login - Successful with Email', async () => {
+    const res = await request(app)
+      .post('/auth/login')
+      .send({
+        username: tenantAEmail,
+        password: 'password123',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.accessToken).toBeDefined();
+    expect(res.body.user.username).toBe(tenantAUsername);
+  });
+
   it('5. Login - Fail on wrong credentials', async () => {
     const res = await request(app)
       .post('/auth/login')
@@ -87,7 +101,7 @@ describe('Auth, RBAC & Multi-Tenancy Integration', () => {
       });
 
     expect(res.status).toBe(401);
-    expect(res.body.error).toBe('Invalid username or password');
+    expect(res.body.error).toBe('Invalid credentials');
   });
 
   it('6. Profile - Successful for authenticated user', async () => {
@@ -200,7 +214,7 @@ describe('Auth, RBAC & Multi-Tenancy Integration', () => {
         password: 'password123',
       });
     expect(loginRes.status).toBe(401);
-    expect(loginRes.body.error).toBe('Invalid username or password');
+    expect(loginRes.body.error).toBe('Invalid credentials');
 
     // Reactivate salesman
     const reactivateRes = await request(app)

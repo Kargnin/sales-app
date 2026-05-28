@@ -78,6 +78,7 @@ export interface DashboardMetrics {
   totalOrders: number;
   totalVisits: number;
   activeSalesmen: number;
+  pendingApprovals: number;
   revenueChange: number;
   ordersChange: number;
   visitsChange: number;

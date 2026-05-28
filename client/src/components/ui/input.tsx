@@ -1,10 +1,13 @@
 import { TextInput, View, type TextInputProps } from "react-native";
 import { Text } from "./text";
+import tailwindConfig from "../../../tailwind.config";
 
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
 }
+
+const colors = tailwindConfig.theme.extend.colors;
 
 export function Input({ label, error, style, ...props }: InputProps) {
   return (
@@ -17,19 +20,19 @@ export function Input({ label, error, style, ...props }: InputProps) {
       <TextInput
         style={[
           {
-            backgroundColor: "#ffffff",
+            backgroundColor: colors.surface,
             borderWidth: 1,
-            borderColor: error ? "#ff3e00" : "#f2f0ed",
+            borderColor: error ? colors["ember-orange"] : colors["stone-border"],
             borderRadius: 10,
             paddingHorizontal: 16,
             paddingVertical: 12,
             fontFamily: "Inter_400",
             fontSize: 15,
-            color: "#474645",
+            color: colors.graphite,
           },
           style,
         ]}
-        placeholderTextColor="#848281"
+        placeholderTextColor={colors.ash}
         {...props}
       />
       {error && (

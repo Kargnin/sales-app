@@ -11,6 +11,7 @@ import visitsRouter from './routes/visits.routes.js';
 import ordersRouter from './routes/orders.routes.js';
 import productsRouter from './routes/products.routes.js';
 import { notificationsRouter } from './routes/notifications.routes.js';
+import dashboardRouter from './routes/dashboard.routes.js';
 
 const app = express();
 const PORT = config.PORT;
@@ -33,6 +34,7 @@ app.use('/api/visits', visitsRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 // ─── Health Check ────────────────────────────────────
 app.get('/api/health', (_req, res) => {

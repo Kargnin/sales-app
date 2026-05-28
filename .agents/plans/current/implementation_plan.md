@@ -1,89 +1,118 @@
-# Implementation Plan — Stitch-Style Admin Dashboard Redesign (Reviewed)
+# Stitch-Style Admin Dashboard & Login UI Redesign (Revised)
 
-The objective is to redesign the Admin Dashboard (including its top bar, borderless stats, recent visits list, and bottom tab bar) to look 100% identical to the premium, minimalist design of the Stitch dashboard mockup.
+This plan outlines the redesign of the **Admin Dashboard** and **Login Page** in the React Native / Expo client to match the exact Stitch designs, and integrates a secure, role-adaptive metrics API in the Express / Drizzle backend to serve real business overview data.
 
-## Incorporated Review Suggestions
+## User Review Required
 
 > [!IMPORTANT]
-> The following improvements have been incorporated following review:
-> - **Dev-Mode Mock Gating**: Seed/fallback data is gated behind Vite's `import.meta.env.DEV` to guarantee data integrity in production.
-> - **Stitch Token Mapping**: All raw hex colors are mapped to existing `--stitch-*` CSS custom properties, preserving the theming system.
-> - **Ionic MenuController Integration**: Opened the menu drawer using Ionic's global `menuController` singleton directly in the avatar click handler of the dashboard page.
-> - **Reusable StatCard Color Control**: Added a `valueColor` prop to the `StatCard` component to allow clean configurability (e.g. orange warn color for Pending Approvals).
-> - **Unused Imports Clean-up**: Included static analysis checks using `tsc` to verify no leftover dead imports.
+> **Email or Username Login Support**: In the Stitch login mockup, the input field placeholder is `Email address`. We will update the server-side `/auth/login` endpoint to accept **either** email or username in that field. The shared zod `loginSchema` will be updated to say "Username or email is required" and the API error will be generic ("Invalid credentials") for security.
+>
+> **Forgot Password Flow**: We will style the `Forgot Password?` link exactly as in the mockup, and wire it up to display a native React Native `Alert.alert("Reset Password", "Please contact your system administrator to reset your password.")`.
+>
+> **Asset Localization**: We will download the two mascot illustrations from Stitch to `client/assets/` locally, eliminating external network dependencies and ensuring instant load times.
 
 ---
 
 ## Proposed Changes
 
-### 1. Conditionally Hide Generic Hamburger
-Modify `client/src/components/layout/PageLayout.tsx` to:
-- Accept a new optional prop `hideMenuButton?: boolean`.
-- Allow the page layout to hide the generic hamburger icon when a custom menu trigger (such as the mascot avatar) is desired.
+### Backend Components
 
-### 2. Header and Top Bar Redesign
-Modify `client/src/features/dashboard/AdminDashboardPage.tsx` to:
-- Style the mascot avatar as a clean, rounded circle on a white/transparent background with a subtle border:
-  - Width/height: 40px
-  - Cursor pointer
-- Open the side menu drawer by importing and calling Ionic's global `menuController.toggle('start')` on avatar click.
-- Standardize the `Good morning, Partner` title typography using the premium bold font style from the mockup (`color: 'var(--stitch-text-heading)'`, weight `600`, size `23px`).
-- Refactor the notification bell slot to match the mockup exactly: a white circle with a thin light-gray border (`1px solid var(--stitch-stone-border, #f2f0ed)`) and an outline notifications icon.
+We will implement a secure, role-adaptive backend endpoint `GET /api/dashboard/metrics` that queries Drizzle ORM to compute actual live metrics, and update shared schemas and auth routes to allow logging in with either username or email.
 
-### 3. Overview Stat Cards
-Modify `client/src/features/dashboard/AdminDashboardPage.tsx` to:
-- Update the inline `StatCard` component:
-  - Add an optional `valueColor?: string` prop.
-  - Default value color to `var(--stitch-text-heading)`.
-- Strip the `StatCard` elements of their elevated backgrounds, shadows, and solid borders to match the clean, borderless transparent style.
-- Map all visual properties to Stitch variables:
-  - **Label**: `var(--stitch-text-muted)`, size `13px`, regular weight.
-  - **Value**: font size `32px`, bold/medium weight.
-  - **Trends / Subtext**: font size `12px`/`13px`, weight `400` or `500`.
-- Pass custom tokens for the stats:
-  - `Total Sales`: value is `var(--stitch-text-heading)`, trend line is `var(--stitch-success)` with dynamic up-right trend indicator `↗ +12%`.
-  - `Active Salesmen`: value is `var(--stitch-text-heading)`, subtext `Online now` in `var(--stitch-success)` with people icon.
-  - `Pending Approvals`: pass `valueColor: 'var(--stitch-warning, #ffbb26)'`, subtext `New shops` in `var(--stitch-warning)` with storefront icon.
-  - `Total Visits`: value is `var(--stitch-text-heading)`, subtext `This week` in `var(--stitch-text-muted)` with calendar icon.
-- Lay them out in a responsive CSS Grid with `gap: 24px 16px` on mobile.
+#### [NEW] [dashboard.routes.ts](file:///Users/bhushanmalani/Code/Sales%20App/server/src/routes/dashboard.routes.ts)
+- Implement `GET /metrics` route.
+- **Security**: Apply global middleware `authenticate` and `tenantScope` so it is locked to authenticated users of a specific tenant.
+- **Role-Adaptive Scoping**:
+  - Check `req.user.role`.
+  - For `salesman`, restrict the counts/sums to their own `salesmanId = req.user.sub` (e.g. Total Sales revenue from their orders, Total Visits from their visits, and `activeSalesmen` = 1, `pendingApprovals` = 0).
+  - For `admin`, fetch aggregate totals across the full `tenantId` (e.g. Total Sales of all orders, total active salesmen, total pending shops, total visits).
+- Compute:
+  1. `totalRevenue`: Sum of `totalAmount` of all confirmed/completed/delivered orders.
+  2. `activeSalesmen`: Count of active users with `role = 'salesman'`.
+  3. `pendingApprovals`: Count of shops with `status = 'pending_approval'`.
+  4. `totalVisits`: Count of all check-in visits.
+  5. `revenueChange` / `ordersChange` / `visitsChange`: Dynamic comparisons (or hardcoded percentage constants matching Stitch).
 
-### 4. Borderless Recent Visits Timeline
-Modify `client/src/features/dashboard/AdminDashboardPage.tsx` to:
-- Remove the card background, border, shadow, and inner padding from the visits container to make it a flat, borderless list on the canvas.
-- Format each `VisitRow` exactly like the design diagram:
-  - **Avatar**: `width: 44px, height: 44px`, circle with gray background (`var(--stitch-stone-border)` or `var(--stitch-surface-recessed)`), bold initials in `var(--stitch-text-heading)`.
-  - **Middle**: Name in semibold `var(--stitch-text-heading)` text, and shop name line in `var(--stitch-text-muted)` with storefront icon.
-  - **Right**: Status in `var(--stitch-text-heading)` for Completed, or `var(--stitch-warning)` for In Progress. Time in `var(--stitch-text-muted)` underneath status.
-  - Separated by thin `1px solid var(--stitch-stone-border)` lines between rows.
-- **Vite-Gated Dev Mock Fallback**: Gate the fallback mock visits behind `import.meta.env.DEV` to safeguard real empty production history. If database visits are empty in local dev-mode:
-  ```tsx
-  const useMockVisits = import.meta.env.DEV && recentVisits.length === 0;
-  const displayVisits = useMockVisits ? MOCK_VISITS : recentVisits;
+#### [MODIFY] [index.ts](file:///Users/bhushanmalani/Code/Sales%20App/server/src/index.ts)
+- Import and register `/api/dashboard` routes.
+
+#### [MODIFY] [auth.routes.ts](file:///Users/bhushanmalani/Code/Sales%20App/server/src/routes/auth.routes.ts)
+- Update login endpoint to support finding a user by username **or** email address:
+  `where: username.includes('@') ? eq(users.email, username) : eq(users.username, username)`
+- Align error messages to "Invalid credentials."
+
+#### [MODIFY] [auth.schemas.ts](file:///Users/bhushanmalani/Code/Sales%20App/packages/shared/src/schemas/auth.schemas.ts)
+- Update `loginSchema` validation:
+  ```typescript
+  export const loginSchema = z.object({
+    username: z.string().min(1, { message: 'Username or email is required' }),
+    password: z.string().min(1, { message: 'Password is required' }),
+  });
   ```
-  Where `MOCK_VISITS` is populated with the exact three items from the screenshot.
 
-### 5. Floating Action Button
-Modify `client/src/features/dashboard/AdminDashboardPage.tsx` to:
-- Style the `IonFab` "+ New Product" button as a pill button with a solid black (`var(--stitch-midnight)`) background, white plus sign, and white text, floating elegantly above the tab bar.
+---
 
-### 6. Bottom Navigation Drawer (Tab Bar)
-Modify `client/src/components/layout/AppShell.tsx` and `client/src/components/layout/AppShell.css` to:
-- Style the `IonTabBar` with a flat, off-white background (`var(--stitch-canvas)`), very thin top border (`var(--stitch-stone-border)`), and no shadows.
-- Set the active tab highlight color to `var(--stitch-accent)` for the icon and label.
-- Set the inactive tabs in standard muted gray `var(--stitch-text-muted)` with outline icons.
-- Add CSS rules to automatically transition the active tab's material icon to filled (`font-variation-settings: 'FILL' 1`), while keeping other icons in their outline state.
+### Frontend Components
+
+We will completely rebuild the Admin Dashboard and Login layout to match the typography, spacing, border styles, mascot illustrations, and floating elements of the Stitch designs.
+
+#### [MODIFY] [index.ts](file:///Users/bhushanmalani/Code/Sales%20App/client/src/types/index.ts)
+- Update `DashboardMetrics` interface to include `pendingApprovals: number` field.
+
+#### [MODIFY] [useDashboardMetrics.ts](file:///Users/bhushanmalani/Code/Sales%20App/client/src/hooks/queries/useDashboardMetrics.ts)
+- Update query function to fetch from `/api/dashboard/metrics` using the `apiClient`.
+
+#### [MODIFY] [metrics-grid.tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/src/features/dashboard/metrics-grid.tsx)
+- Re-style the Overview/Stats Grid as a beautiful 2x2 wrapping grid.
+- Style cards with `bg-white`, a 1px border (`#f2f0ed`), 10px rounded corners, and proper icon badges matching Stitch.
+- **Robust States**: 
+  - Render a matching 2x2 grid of custom shaded Skeleton Cards when `isLoading` is true.
+  - Render a clean error state text when the API errors out.
+
+#### [NEW] [recent-visits-list.tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/src/features/dashboard/recent-visits-list.tsx)
+- Replaces the generic recent orders list with "Recent Visits" showing real check-in activity using the existing `useVisits` hook.
+- Implement list items matching Stitch design:
+  - Initials circle avatar (`JD`, `AS`, `RJ`) with `#eeeeed` background.
+  - Salesman Name + Shop Name with a subtle storefront icon.
+  - Status text ("Completed" or "In Progress" colored appropriately).
+  - Time text formatted via standard locale-aware `Intl.DateTimeFormat` (or a helper).
+  - "Recent Visits" header row with a "View All" action button.
+- **Robust States**:
+  - Render simple list skeletons when `isLoading` is true.
+  - Render a beautiful custom empty state message ("No recent visits recorded today") when the visits list is empty.
+
+#### [MODIFY] [dashboard.tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/app/(admin)/dashboard.tsx)
+- Replace generic "Dashboard" text with a Stitch-perfect Header Row:
+  - Localized mascot illustration (`assets/mascot_partner.png`) in a rounded circle with standard fallback.
+  - Dynamic Greeting derived from the current hour using `new Date().getHours()`:
+    - `Good morning, Partner` (5:00 - 11:59)
+    - `Good afternoon, Partner` (12:00 - 17:59)
+    - `Good evening, Partner` (18:00 - 4:59)
+  - Far-right Notification Bell button with rounded border.
+- Integrate the newly designed `MetricsGrid` and `RecentVisitsList`.
+- Render the Floating Action Button (FAB) pill shape at the bottom-right: `bg-primary` (black/charcoal), containing a white `+` icon and text `New Product` with a rich drop shadow.
+
+#### [MODIFY] [login-form.tsx](file:///Users/bhushanmalani/Code/Sales%20App/client/src/features/auth/login-form.tsx)
+- Rebuild inputs to have custom envelope (`mail`) and lock (`lock`) inline icons on the left, comfortable padding, and NO label above them.
+- Add password visibility toggle on the right of the password input.
+- Insert the beautiful circular local mascot image (`assets/mascot_welcome.png`) with white borders, shadow, and an absolute-positioned heart button in red/orange overlay at the bottom right.
+- Add the `Forgot Password?` link styled in Ember Orange `#ff3e00` aligned on the right.
+- Change header to serif "Welcome back" (using Fraunces font).
+- Re-style footer link `Don't have an account? Create an account` with the proper underlined styles.
 
 ---
 
 ## Verification Plan
 
-### Manual Verification
-1. Open the Admin Dashboard page in the browser.
-2. Confirm the top bar matches the Stitch mockup perfectly (no hamburger icon, avatar opens side menu drawer, "Good morning, Partner", outline bell in a thin gray circular frame).
-3. Verify the Overview stats are completely borderless and match the grid, with Pending Approvals value set to orange.
-4. Verify the Recent Visits list is borderless and displays mockup visits in local development, and live visits if populated.
-5. Confirm that the floating "+ New Product" button is a beautiful solid black pill.
-6. Verify that the bottom tab bar uses the active coral-red color, is flat with no drop shadow, and active icon is filled.
+### Automated Tests
+- Run TS checks on both client and server:
+  - `cd client && npx tsc --noEmit`
+  - `cd server && npm run build`
+- Add Integration Tests:
+  - **Auth**: A test inside `server/src/__tests__/auth.test.ts` verifying login with email in the `username` field.
+  - **Dashboard**: A new test suite `server/src/__tests__/dashboard.test.ts` verifying that `GET /api/dashboard/metrics` returns role-scoped numbers (admin sees all user aggregates, salesman sees only their own data).
 
-### Automated Checks
-- Run compilation checks: `npx tsc --noEmit --noUnusedLocals` in the client folder to guarantee zero compilation errors or unused variables.
+### Manual Verification
+- Deploy and preview the screens in the Expo web/native runner:
+  - Ensure the Login screen displays the mascot header, inputs have matching icons, forgot password link is present, and password eye toggles.
+  - Verify that the Dashboard loads stats dynamically from the backend, renders the mascot header, shows recent visits with initials avatars, and has the floating `+ New Product` pill.

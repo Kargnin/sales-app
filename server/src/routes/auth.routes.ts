@@ -99,17 +99,17 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
     const { username, password } = req.body;
 
     const user = await db.query.users.findFirst({
-      where: eq(users.username, username),
+      where: username.includes('@') ? eq(users.email, username) : eq(users.username, username),
     });
 
     if (!user || user.status === 'inactive') {
-      res.status(401).json({ error: 'Invalid username or password' });
+      res.status(401).json({ error: 'Invalid credentials' });
       return;
     }
 
     const passwordMatch = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatch) {
-      res.status(401).json({ error: 'Invalid username or password' });
+      res.status(401).json({ error: 'Invalid credentials' });
       return;
     }
 

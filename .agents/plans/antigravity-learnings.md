@@ -81,3 +81,25 @@
 - **Root cause**: Antigravity reached for the imperative API rather than using the existing `IonMenuButton` component that wraps any content and natively toggles the menu.
 - **Fix applied**: Wrapped the mascot avatar in `<IonMenuButton autoHide={false}>` and removed the `menuController` import and click handler. The `IonMenuButton` renders the mascot image as its content (replacing the default hamburger icon) and toggles the menu via Ionic's built-in mechanism.
 - **Rule to add**: "Prefer Ionic's declarative components (IonMenuButton, IonBackButton, IonRouterLink) over imperative APIs (menuController, navController). The declarative components handle edge cases (auto-hide when menu unavailable, accessibility, platform adaptation) that imperative code may miss."
+
+---
+
+## [2026-05-28] Stitch-Style Admin Dashboard & Login UI Redesign (Client + Server)
+
+### Pattern: Web-Oriented Packages Installed in React Native/Expo Project
+- **What happened**: Antigravity added `tailwindcss@^4.0.0`, `postcss@^8.5.15`, and `@tailwindcss/postcss@^4.0.0` as devDependencies to the Expo client package. These are web-oriented PostCSS packages that conflict with NativeWind v5 + `react-native-css`, which processes styling through Metro rather than PostCSS. The Expo bundler attempted PostCSS processing and failed with "It looks like you're trying to use tailwindcss directly as a PostCSS plugin."
+- **Root cause**: Antigravity doesn't distinguish between web Tailwind (which uses PostCSS) and React Native NativeWind v5 (which uses Metro + react-native-css). It treated styling setup as if this were a web project.
+- **Fix applied**: Removed `tailwindcss`, `postcss`, and `@tailwindcss/postcss` from `client/package.json` devDependencies. These packages are not needed for NativeWind v5.
+- **Rule to add**: "DO NOT install `tailwindcss`, `postcss`, or `@tailwindcss/postcss` in Expo/React Native projects using NativeWind v5. NativeWind v5 + react-native-css processes Tailwind config through Metro, not PostCSS. These web-oriented packages actively break the Metro bundler. The only CSS-related dependency needed is `nativewind` and `react-native-css`."
+
+### Pattern: NativeWind v4 Config Syntax with v5 (New)
+- **What happened**: `client/tailwind.config.ts` used `presets: [require("nativewind/preset")]`, which is NativeWind v4 syntax. NativeWind v5 does not export a `preset` subpath — the tailwind config is processed directly by `react-native-css` via Metro without needing a preset declaration.
+- **Root cause**: Antigravity applied NativeWind v4 configuration patterns without checking the v5 documentation for breaking changes.
+- **Fix applied**: Removed the `presets` line and the `import type { Config } from "tailwindcss"` + `satisfies Config` annotation.
+- **Rule to add**: "When upgrading or working with NativeWind v5, do NOT use `presets: [require('nativewind/preset')]`. This export no longer exists. The tailwind config is consumed directly by react-native-css. Check the installed NativeWind version and read its specific docs before writing config."
+
+### Pattern: Vague/Wrong Walkthrough Claims About Styling Approach
+- **What happened**: The walkthrough claimed components were "refactored to use Tailwind text and background color classes instead of custom style objects" and had "zero hardcoded hex codes." In reality: (a) all components use inline `style={{}}` objects, not Tailwind classNames, (b) colors are imported from `tailwindConfig.theme.extend.colors` rather than hardcoded, but (c) the overall approach is JS style objects, not NativeWind className-based styling.
+- **Root cause**: Antigravity conflates "using color tokens from a config file" with "using Tailwind classNames." The walkthrough oversells what was actually implemented.
+- **Fix applied**: Corrected in audit. The color tokenization via tailwind config is a valid improvement over hardcoded hex values, but the walkthrough should accurately describe the approach used.
+- **Rule to add**: "In walkthroughs, be precise about the styling approach used. 'Color tokenization via tailwind.config.ts' is accurate; 'Tailwind classNames' implies `className='bg-white text-charcoal'` which is a different pattern. Do not conflate these."

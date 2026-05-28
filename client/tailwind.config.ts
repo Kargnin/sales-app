@@ -1,24 +1,10 @@
-import type { Config } from "tailwindcss";
+import { colors } from "./src/theme/colors";
 
 export default {
   content: ["./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
-  presets: [require("nativewind/preset")],
   theme: {
     extend: {
-      colors: {
-        canvas: "#fbfaf9",
-        surface: "#ffffff",
-        "surface-recessed": "#f8f7f4",
-        "stone-border": "#f2f0ed",
-        graphite: "#474645",
-        charcoal: "#343433",
-        ash: "#848281",
-        midnight: "#121212",
-        "ember-orange": "#ff3e00",
-        success: "#00ca48",
-        info: "#0090ff",
-        warning: "#ffbb26",
-      },
+      colors,
       fontFamily: {
         display: ["Fraunces_500"],
         body: ["Inter_400"],
@@ -37,4 +23,4 @@ export default {
       },
     },
   },
-} satisfies Config;
+};

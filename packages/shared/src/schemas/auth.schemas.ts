@@ -12,7 +12,7 @@ export const registerBusinessSchema = z.object({
 export type RegisterBusinessInput = z.infer<typeof registerBusinessSchema>;
 
 export const loginSchema = z.object({
-  username: z.string().min(1, { message: 'Username is required' }),
+  username: z.string().min(1, { message: 'Username or email is required' }),
   password: z.string().min(1, { message: 'Password is required' }),
 });
 export type LoginInput = z.infer<typeof loginSchema>;

@@ -1,10 +1,11 @@
 import { Text as RNText, type TextProps as RNTextProps } from "react-native";
+import tailwindConfig from "../../../tailwind.config";
 
 type TextVariant = "display" | "heading" | "heading-sm" | "body" | "label-medium" | "caption";
 
 interface TextProps extends RNTextProps {
   variant?: TextVariant;
-  color?: "graphite" | "charcoal" | "ash" | "midnight" | "ember" | "surface";
+  color?: "graphite" | "charcoal" | "ash" | "midnight" | "ember" | "surface" | "success" | "warning" | "info";
 }
 
 const variantStyles: Record<TextVariant, { fontFamily: string; fontSize: number; letterSpacing: number; lineHeight: number }> = {
@@ -16,13 +17,18 @@ const variantStyles: Record<TextVariant, { fontFamily: string; fontSize: number;
   caption:       { fontFamily: "Inter_400",    fontSize: 12, letterSpacing: -0.14, lineHeight: 18.96 },
 };
 
+const colors = tailwindConfig.theme.extend.colors;
+
 const colorMap: Record<NonNullable<TextProps["color"]>, string> = {
-  graphite: "#474645",
-  charcoal: "#343433",
-  ash: "#848281",
-  midnight: "#121212",
-  ember: "#ff3e00",
-  surface: "#ffffff",
+  graphite: colors.graphite,
+  charcoal: colors.charcoal,
+  ash: colors.ash,
+  midnight: colors.midnight,
+  ember: colors["ember-orange"],
+  surface: colors.surface,
+  success: colors.success,
+  warning: colors.warning,
+  info: colors.info,
 };
 
 export function Text({ variant = "body", color = "graphite", style, children, ...props }: TextProps) {

@@ -6,6 +6,9 @@ import { Fraunces_500Medium } from "@expo-google-fonts/fraunces";
 import { ActivityIndicator, View } from "react-native";
 import { queryClient } from "../src/lib/queryClient";
 import { useAuthStore } from "../src/stores/authStore";
+import tailwindConfig from "../tailwind.config";
+
+const colors = tailwindConfig.theme.extend.colors;
 
 function AuthRedirect() {
   const { isAuthenticated, isLoading, user, hydrate } = useAuthStore();
@@ -39,8 +42,8 @@ export default function RootLayout() {
 
   if (!fontsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fbfaf9" }}>
-        <ActivityIndicator size="large" color="#121212" />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.canvas }}>
+        <ActivityIndicator size="large" color={colors.midnight} />
       </View>
     );
   }

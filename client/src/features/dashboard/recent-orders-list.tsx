@@ -2,13 +2,24 @@ import { View, FlatList } from "react-native";
 import { Card } from "../../components/ui/card";
 import { Text } from "../../components/ui/text";
 import { MOCK_RECENT_ORDERS } from "../../lib/mockData";
+import tailwindConfig from "../../../tailwind.config";
 
-const statusColors: Record<string, string> = {
-  pending_approval: "#ffbb26",
-  confirmed: "#0090ff",
-  dispatched: "#00ca48",
-  delivered: "#00ca48",
-  cancelled: "#ff3e00",
+const colors = tailwindConfig.theme.extend.colors;
+
+const statusBgColors: Record<string, string> = {
+  pending_approval: colors.warning + "20",
+  confirmed: colors.info + "20",
+  dispatched: colors.success + "20",
+  delivered: colors.success + "20",
+  cancelled: colors["ember-orange"] + "20",
+};
+
+const statusTextColors: Record<string, string> = {
+  pending_approval: colors.warning,
+  confirmed: colors.info,
+  dispatched: colors.success,
+  delivered: colors.success,
+  cancelled: colors["ember-orange"],
 };
 
 export function RecentOrdersList() {
@@ -27,15 +38,15 @@ export function RecentOrdersList() {
                 <Text variant="label-medium" color="charcoal">{item.shopName}</Text>
                 <Text variant="caption" color="ash">{item.salesmanName}</Text>
               </View>
-              <View style={{ alignItems: "flex-end", gap: 2 }}>
+              <View style={{ alignItems: "flex-end", gap: 4 }}>
                 <Text variant="label-medium" color="charcoal">Rs. {item.totalAmount}</Text>
                 <View style={{
-                  backgroundColor: statusColors[item.status] + "20",
+                  backgroundColor: statusBgColors[item.status] || colors["stone-border"],
                   paddingHorizontal: 8,
                   paddingVertical: 2,
                   borderRadius: 9999,
                 }}>
-                  <Text variant="caption">
+                  <Text variant="caption" style={{ color: statusTextColors[item.status] || colors.ash }}>
                     {item.status.replace("_", " ")}
                   </Text>
                 </View>
