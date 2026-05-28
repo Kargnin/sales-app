@@ -5,6 +5,6 @@ import type { Shop } from "../../types";
 export function useShops() {
   return useQuery({
     queryKey: ["shops"],
-    queryFn: () => apiClient<Shop[]>("/shops"),
+    queryFn: () => apiClient<Shop[]>("/api/shops"),
   });
 }

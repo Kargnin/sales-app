@@ -5,6 +5,6 @@ import type { Visit } from "../../types";
 export function useVisits() {
   return useQuery({
     queryKey: ["visits"],
-    queryFn: () => apiClient<Visit[]>("/visits"),
+    queryFn: () => apiClient<Visit[]>("/api/visits"),
   });
 }

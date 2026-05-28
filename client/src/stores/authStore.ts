@@ -60,7 +60,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const refreshToken = await storage.getItem("refreshToken");
 
       if (token) {
-        const user = await apiClient<User>("/auth/me");
+        const user = await apiClient<User>("/api/users/me");
         set({ token, refreshToken, user, isAuthenticated: true, isLoading: false });
       } else {
         set({ isLoading: false });

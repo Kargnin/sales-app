@@ -5,14 +5,14 @@ import type { Order } from "../../types";
 export function useOrders() {
   return useQuery({
     queryKey: ["orders"],
-    queryFn: () => apiClient<Order[]>("/orders"),
+    queryFn: () => apiClient<Order[]>("/api/orders"),
   });
 }
 
 export function useOrder(id: string) {
   return useQuery({
     queryKey: ["orders", id],
-    queryFn: () => apiClient<Order>(`/orders/${id}`),
+    queryFn: () => apiClient<Order>(`/api/orders/${id}`),
     enabled: !!id,
   });
 }

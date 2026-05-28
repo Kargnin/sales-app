@@ -5,6 +5,6 @@ import type { Product } from "../../types";
 export function useProducts() {
   return useQuery({
     queryKey: ["products"],
-    queryFn: () => apiClient<Product[]>("/products"),
+    queryFn: () => apiClient<Product[]>("/api/products"),
   });
 }
