@@ -10,7 +10,7 @@ export interface MenuItem {
 const ADMIN_ITEMS: MenuItem[] = [
   { icon: "grid-outline", activeIcon: "grid", label: "Dashboard", route: "/(admin)/dashboard" },
   { icon: "storefront-outline", activeIcon: "storefront", label: "Shops", route: "/(admin)/shops" },
-  { icon: "cube-outline", activeIcon: "cube", label: "Product Catalog", route: "/(admin)/orders" },
+  { icon: "cube-outline", activeIcon: "cube", label: "Product Catalog", route: "/(admin)/products" },
   { icon: "time-outline", activeIcon: "time", label: "Visit History", route: "/(admin)/more" },
   { icon: "people-outline", activeIcon: "people", label: "Team Management", route: "/(admin)/team" },
   { icon: "checkmark-done-circle-outline", activeIcon: "checkmark-done-circle", label: "Shop Approvals", route: "/(admin)/more" },

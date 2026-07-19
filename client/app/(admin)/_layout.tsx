@@ -36,6 +36,8 @@ function GlobalHeader() {
         return "Shops";
       case "orders":
         return "Orders";
+      case "products":
+        return "Product Catalog";
       case "team":
         return "Team Management";
       case "more":
@@ -140,6 +142,15 @@ export default function AdminLayout() {
               title: "Orders",
               tabBarIcon: ({ color, focused }) => (
                 <Ionicons name={focused ? "cart" : "cart-outline"} size={22} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="products"
+            options={{
+              title: "Catalog",
+              tabBarIcon: ({ color, focused }) => (
+                <Ionicons name={focused ? "cube" : "cube-outline"} size={22} color={color} />
               ),
             }}
           />

@@ -71,6 +71,10 @@ export const products = mysqlTable('products', {
   sku:           varchar('sku', { length: 100 }),
   price:         decimal('price', { precision: 10, scale: 2 }).notNull(),
   stockQuantity: int('stock_quantity').default(0).notNull(),
+  imageUrl:      varchar('image_url', { length: 500 }),
+  category:      varchar('category', { length: 100 }),
+  description:   text('description'),
+  unit:          varchar('unit', { length: 50 }),
   createdAt:     timestamp('created_at').defaultNow().notNull(),
 });
 

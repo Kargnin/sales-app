@@ -1,0 +1,1 @@
+This is a Specialzed Field Sales management mobile app, where primarily the business admins can track and verify that the sales agent visited the intended shops, see business analytics, route directions for agents, see order details etc.

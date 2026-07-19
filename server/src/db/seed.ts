@@ -1,10 +1,23 @@
 import { db } from './connection.js';
-import { tenants, users, shops, products } from './schema.js';
+import { tenants, users, shops, products, visits, orders, orderItems, payments, auditLogs, notifications } from './schema.js';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 async function seed() {
   console.log('🌱 Seeding database...');
+
+  // ─── Clear existing data (respect FK order) ────────
+  await db.delete(notifications);
+  await db.delete(auditLogs);
+  await db.delete(payments);
+  await db.delete(orderItems);
+  await db.delete(orders);
+  await db.delete(visits);
+  await db.delete(products);
+  await db.delete(shops);
+  await db.delete(users);
+  await db.delete(tenants);
+  console.log('  🧹 Cleared existing seed data');
 
   // ─── Tenant ────────────────────────────────────────
   const tenantId = uuidv4();
@@ -82,9 +95,16 @@ async function seed() {
 
   // ─── Products ──────────────────────────────────────
   const productData = [
-    { name: 'Sparkle Dishwash Bar 200g', sku: 'SPK-BAR-200', price: '15.00', stockQuantity: 500 },
-    { name: 'Sparkle Dishwash Gel 500ml', sku: 'SPK-GEL-500', price: '85.00', stockQuantity: 300 },
-    { name: 'Sparkle Dishwash Gel 1L', sku: 'SPK-GEL-1000', price: '150.00', stockQuantity: 200 },
+    { name: 'Cola Drink 500ml',        sku: 'COLA-500',   price: '40.00',  stockQuantity: 200, category: 'Drinks', unit: '500ml',  imageUrl: 'https://picsum.photos/seed/cola500/200/200',   description: 'Refreshing carbonated cola drink' },
+    { name: 'Orange Juice 1L',         sku: 'OJ-1000',    price: '120.00', stockQuantity: 150, category: 'Drinks', unit: '1L',     imageUrl: 'https://picsum.photos/seed/oj1000/200/200',    description: 'Freshly squeezed orange juice' },
+    { name: 'Potato Chips 150g',       sku: 'CHIPS-150',  price: '30.00',  stockQuantity: 8,   category: 'Snacks', unit: '150g',  imageUrl: 'https://picsum.photos/seed/chips150/200/200',  description: 'Crunchy salted potato chips' },
+    { name: 'Mixed Nuts 200g',         sku: 'NUTS-200',   price: '250.00', stockQuantity: 0,   category: 'Snacks', unit: '200g',  imageUrl: 'https://picsum.photos/seed/nuts200/200/200',   description: 'Premium mixed nuts with almonds and cashews' },
+    { name: 'Milk 1L',                 sku: 'MILK-1000',  price: '60.00',  stockQuantity: 300, category: 'Dairy',  unit: '1L',     imageUrl: 'https://picsum.photos/seed/milk1000/200/200',  description: 'Fresh full cream milk' },
+    { name: 'Butter 500g',             sku: 'BTR-500',    price: '240.00', stockQuantity: 45,  category: 'Dairy',  unit: '500g',  imageUrl: 'https://picsum.photos/seed/btr500/200/200',    description: 'Creamy salted butter block' },
+    { name: 'Basmati Rice 5kg',       sku: 'RICE-5000',  price: '450.00', stockQuantity: 100, category: 'Pantry', unit: '5kg',   imageUrl: 'https://picsum.photos/seed/rice5000/200/200',  description: 'Premium aged basmati rice' },
+    { name: 'Cooking Oil 1L',          sku: 'OIL-1000',   price: '180.00', stockQuantity: 2,   category: 'Pantry', unit: '1L',     imageUrl: 'https://picsum.photos/seed/oil1000/200/200',   description: 'Refined sunflower cooking oil' },
+    { name: 'Sparkle Dishwash Bar 200g', sku: 'SPK-BAR-200',  price: '15.00',  stockQuantity: 500, category: 'Pantry', unit: '200g', imageUrl: 'https://picsum.photos/seed/spkbar200/200/200', description: 'Effective dishwashing soap bar' },
+    { name: 'Sparkle Dishwash Gel 1L',   sku: 'SPK-GEL-1000', price: '150.00', stockQuantity: 200, category: 'Pantry', unit: '1L',   imageUrl: 'https://picsum.photos/seed/spkgel1000/200/200', description: 'Concentrated dishwashing liquid gel' },
   ];
 
   await db.insert(products).values(
@@ -94,7 +114,7 @@ async function seed() {
       ...p,
     }))
   );
-  console.log(`  ✅ 3 products created`);
+  console.log(`  ✅ 10 products created`);
 
   console.log('\n🎉 Seed complete!');
   process.exit(0);
