@@ -1,7 +1,7 @@
 import type {
   UserRole, ShopStatus, OrderSource, OrderStatus,
   PaymentStatus, PaymentMethod, TenantTier, UserStatus,
-} from './enums.js';
+} from './enums';
 
 // ─── Base ─────────────────────────────────────────
 export interface Tenant {

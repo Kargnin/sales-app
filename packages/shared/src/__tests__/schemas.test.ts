@@ -8,7 +8,7 @@ import {
   createVisitSchema,
   createPaymentSchema,
   createEmployeeSchema,
-} from '../schemas/index.js';
+} from '../schemas/index';
 
 describe('Auth Schemas', () => {
   describe('registerBusinessSchema', () => {
