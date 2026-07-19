@@ -1,6 +1,18 @@
 {
   "version": 1,
   "skills": {
+    "chrome-devtools-axi": {
+      "source": "kunchenguid/chrome-devtools-axi",
+      "sourceType": "github",
+      "skillPath": "skills/chrome-devtools-axi/SKILL.md",
+      "computedHash": "824e8e72ae7be58b79f2790ae0131b1cd6f555dd5fd2974db6e4e270c35d28c1"
+    },
+    "gh-axi": {
+      "source": "kunchenguid/gh-axi",
+      "sourceType": "github",
+      "skillPath": "skills/gh-axi/SKILL.md",
+      "computedHash": "689c1f62653bc156ad81b9908c66be0b2492a23df5d273be1c437a031ae1eeaf"
+    },
     "grill-with-docs": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -90,6 +102,18 @@
       "sourceType": "github",
       "skillPath": "skills/ionic-shared/SKILL.md",
       "computedHash": "50d21962eadb39accfd60582c4f4e8fc56db36d3aa9e502c0917dc77c0ade730"
+    },
+    "lavish": {
+      "source": "kunchenguid/lavish-axi",
+      "sourceType": "github",
+      "skillPath": "skills/lavish/SKILL.md",
+      "computedHash": "bdca0069c8d4aa89ea3a3e3b1c394de36431f91ec96531e277c2f23f6d92d6b7"
+    },
+    "quota-axi": {
+      "source": "kunchenguid/quota-axi",
+      "sourceType": "github",
+      "skillPath": "skills/quota-axi/SKILL.md",
+      "computedHash": "d43d9bb981d0ae084a33a45c8aecb437bf95036e3e4dc2db57aa19c74e289e48"
     },
     "react-native-best-practices": {
       "source": "callstackincubator/agent-skills",
