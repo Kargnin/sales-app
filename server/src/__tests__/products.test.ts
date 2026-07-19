@@ -310,4 +310,157 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
       expect(res.body.error).toBe('Validation failed');
     });
   });
+
+  describe('Extended Product Fields & Validation', () => {
+    it('17. Create product with all extended fields', async () => {
+      const res = await request(app)
+        .post('/api/products')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Organic Honey 250g',
+          price: 350.00,
+          description: 'Pure organic honey from Himalayan farms',
+          category: 'Pantry',
+          unit: '250g',
+          taxRate: 12,
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.id).toBeDefined();
+      expect(res.body.name).toBe('Organic Honey 250g');
+      expect(res.body.price).toBe('350.00');
+      expect(res.body.description).toBe('Pure organic honey from Himalayan farms');
+      expect(res.body.category).toBe('Pantry');
+      expect(res.body.unit).toBe('250g');
+    });
+
+    it('18. Create product with tax rate accepted', async () => {
+      const res = await request(app)
+        .post('/api/products')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Taxed Product',
+          price: 200.00,
+          taxRate: 18,
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.id).toBeDefined();
+    });
+
+    it('19. Create product with only name and price sets sensible defaults', async () => {
+      const res = await request(app)
+        .post('/api/products')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Minimal Product',
+          price: 25.00,
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.stockQuantity).toBe(0);
+      expect(res.body.description).toBeNull();
+      expect(res.body.category).toBeNull();
+      expect(res.body.unit).toBeNull();
+    });
+
+    it('20. Validation rejects product with negative price', async () => {
+      const res = await request(app)
+        .post('/api/products')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Negative Price',
+          price: -50.00,
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Validation failed');
+    });
+
+    it('21. Validation rejects product with taxRate exceeding 100', async () => {
+      const res = await request(app)
+        .post('/api/products')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Excessive Tax',
+          price: 100.00,
+          taxRate: 150,
+        });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('22. Validation rejects product with negative taxRate', async () => {
+      const res = await request(app)
+        .post('/api/products')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Negative Tax',
+          price: 100.00,
+          taxRate: -5,
+        });
+
+      expect(res.status).toBe(400);
+    });
+
+    it('23. Validation rejects product with empty name', async () => {
+      const res = await request(app)
+        .post('/api/products')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: '',
+          price: 10.00,
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('Validation failed');
+    });
+
+    it('24. Admin updates product category via PATCH', async () => {
+      // Create a product with an initial category
+      const createRes = await request(app)
+        .post('/api/products')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Re-categorizable Product',
+          price: 75.00,
+          category: 'Drinks',
+        });
+      expect(createRes.status).toBe(201);
+      const updateProductId = createRes.body.id;
+
+      // Update the category
+      const res = await request(app)
+        .patch(`/api/products/${updateProductId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          category: 'Beverages',
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.product.category).toBe('Beverages');
+    });
+
+    it('25. Admin updates product description via PATCH with partial payload', async () => {
+      const createRes = await request(app)
+        .post('/api/products')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          name: 'Partially Updatable Product',
+          price: 200.00,
+        });
+      expect(createRes.status).toBe(201);
+      const updateProductId = createRes.body.id;
+
+      const res = await request(app)
+        .patch(`/api/products/${updateProductId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          description: 'Updated description only — verifies partial PATCH works',
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.product.description).toBe('Updated description only — verifies partial PATCH works');
+    });
+  });
 });
