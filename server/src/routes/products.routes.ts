@@ -10,6 +10,19 @@ const router = Router();
 
 router.use(authenticate, tenantScope);
 
+// ─── Stock Status Helpers ──────────────────────────────────────────
+type StockStatus = 'in_stock' | 'low_stock' | 'out_of_stock';
+
+function computeStockStatus(stockQuantity: number): StockStatus {
+  if (stockQuantity === 0) return 'out_of_stock';
+  if (stockQuantity < 10) return 'low_stock';
+  return 'in_stock';
+}
+
+function attachStockStatus<T extends { stockQuantity: number }>(item: T): T & { stockStatus: StockStatus } {
+  return { ...item, stockStatus: computeStockStatus(item.stockQuantity) };
+}
+
 // ─── Get Scoped Tenant Products Catalog ──────────────────────────────
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -17,14 +30,22 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     const pageParam = req.query.page;
     const limitParam = req.query.limit;
     const searchQuery = req.query.search;
+    const categoryParam = req.query.category;
 
-    let baseWhere: ReturnType<typeof eq> = eq(products.tenantId, tenantId);
+    const whereClauses: any[] = [eq(products.tenantId, tenantId)];
+
     if (searchQuery) {
-      baseWhere = and(
-        baseWhere,
-        sql`lower(${products.name}) like ${'%' + (searchQuery as string).toLowerCase() + '%'}`,
-      ) as any;
+      const q = (searchQuery as string).toLowerCase();
+      whereClauses.push(
+        sql`(lower(${products.name}) like ${'%' + q + '%'} or coalesce(lower(${products.category}), '') like ${'%' + q + '%'})`
+      );
     }
+
+    if (categoryParam && categoryParam !== 'all') {
+      whereClauses.push(eq(products.category, categoryParam as string));
+    }
+
+    const baseWhere = and(...whereClauses);
 
     if (pageParam !== undefined) {
       const page = parseInt(pageParam as string, 10) || 1;
@@ -40,15 +61,37 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
       const totalPages = Math.ceil(totalCount / limit);
 
       res.json({
-        products: paginatedProducts,
+        products: paginatedProducts.map(attachStockStatus),
         pagination: { totalCount, totalPages, currentPage: page, limit },
       });
     } else {
       const allProducts = await db.select().from(products).where(baseWhere);
-      res.json(allProducts);
+      res.json(allProducts.map(attachStockStatus));
     }
   } catch (error) {
     console.error('Error fetching products:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─── Get Single Product ──────────────────────────────────────────────
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const id = req.params.id as string;
+    const tenantId = req.user!.tenantId;
+
+    const product = await db.query.products.findFirst({
+      where: and(eq(products.id, id), eq(products.tenantId, tenantId)),
+    });
+
+    if (!product) {
+      res.status(404).json({ error: 'Product not found' });
+      return;
+    }
+
+    res.json(attachStockStatus(product));
+  } catch (error) {
+    console.error('Error fetching product:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -61,7 +104,7 @@ router.post(
   validate(createProductSchema),
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { name, sku, price, stockQuantity } = req.body;
+      const { name, sku, price, stockQuantity, imageUrl, category, description, unit } = req.body;
       const tenantId = req.user!.tenantId;
       const productId = uuidv4();
 
@@ -72,10 +115,14 @@ router.post(
         sku: sku || null,
         price: String(price),
         stockQuantity: stockQuantity ?? 0,
+        imageUrl: imageUrl || null,
+        category: category || null,
+        description: description || null,
+        unit: unit || null,
       });
 
       const newProduct = await db.query.products.findFirst({ where: eq(products.id, productId) });
-      res.status(201).json(newProduct);
+      res.status(201).json(attachStockStatus(newProduct!));
     } catch (error) {
       console.error('Error creating product:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -103,17 +150,21 @@ router.patch(
         return;
       }
 
-      const { name, sku, price, stockQuantity } = req.body;
+      const { name, sku, price, stockQuantity, imageUrl, category, description, unit } = req.body;
 
       await db.update(products).set({
         name: name !== undefined ? name : undefined,
         sku: sku !== undefined ? sku : undefined,
         price: price !== undefined ? String(price) : undefined,
         stockQuantity: stockQuantity !== undefined ? stockQuantity : undefined,
+        imageUrl: imageUrl !== undefined ? imageUrl : undefined,
+        category: category !== undefined ? category : undefined,
+        description: description !== undefined ? description : undefined,
+        unit: unit !== undefined ? unit : undefined,
       }).where(eq(products.id, id));
 
       const updatedProduct = await db.query.products.findFirst({ where: eq(products.id, id) });
-      res.json({ message: 'Product details updated successfully', product: updatedProduct });
+      res.json({ message: 'Product details updated successfully', product: attachStockStatus(updatedProduct!) });
     } catch (error) {
       console.error('Error editing product:', error);
       res.status(500).json({ error: 'Internal server error' });

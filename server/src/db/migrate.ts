@@ -21,6 +21,24 @@ async function migrate() {
     else throw e;
   }
 
+  // Product metadata columns (image_url, category, description, unit)
+  const productColumns = [
+    'ALTER TABLE products ADD COLUMN image_url VARCHAR(500)',
+    'ALTER TABLE products ADD COLUMN category VARCHAR(100)',
+    'ALTER TABLE products ADD COLUMN description TEXT',
+    'ALTER TABLE products ADD COLUMN unit VARCHAR(50)',
+  ];
+
+  for (const col of productColumns) {
+    try {
+      await conn.execute(col);
+      console.log('  Added column:', col.replace('ALTER TABLE products ADD COLUMN ', ''));
+    } catch (e: any) {
+      if (e.code === 'ER_DUP_FIELDNAME') console.log('  Already exists:', col.replace('ALTER TABLE products ADD COLUMN ', ''));
+      else throw e;
+    }
+  }
+
   const indexes = [
     'CREATE INDEX idx_users_tenant_role ON users(tenant_id, role)',
     'CREATE INDEX idx_users_username ON users(username)',
@@ -31,6 +49,7 @@ async function migrate() {
     'CREATE INDEX idx_orders_tenant_salesman ON orders(tenant_id, salesman_id)',
     'CREATE INDEX idx_orders_cancellation_token ON orders(cancellation_token)',
     'CREATE INDEX idx_notifications_user_tenant ON notifications(tenant_id, user_id, is_read)',
+    'CREATE INDEX idx_products_tenant_category ON products(tenant_id, category)',
   ];
 
   for (const idx of indexes) {
