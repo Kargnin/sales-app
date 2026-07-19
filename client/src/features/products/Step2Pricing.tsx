@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
-import { View } from "react-native";
-import { FormInput, FormSelect, ImageUploader } from "../../components/shared";
+import { View, TextInput } from "react-native";
+import { useFormContext, Controller } from "react-hook-form";
+import type { FieldValues } from "react-hook-form";
+import { FormInputController, FormSelectController, ImageUploader } from "../../components/shared";
 import { Text } from "../../components/ui/text";
 
 const UNIT_OPTIONS = [
@@ -18,67 +19,7 @@ interface Step2PricingProps {
 }
 
 export function Step2Pricing({ onDataChange, fieldErrors, initialData }: Step2PricingProps) {
-  const [price, setPrice] = useState(initialData.price != null ? String(initialData.price) : "");
-  const [unit, setUnit] = useState(initialData.unit ?? "");
-  const [taxRate, setTaxRate] = useState(initialData.taxRate ? String(initialData.taxRate) : "");
-  const [imageUri, setImageUri] = useState<string | null>(initialData.imageUri ?? null);
-
-  // ----- Propagate numeric-converted fields to the wizard -----
-  const propagate = useCallback(
-    (p: string, u: string, tax: string, img: string | null) => {
-      const payload: Record<string, any> = {
-        price: p ? parseFloat(p) : undefined,
-        unit: u,
-        taxRate: tax !== "" ? parseFloat(tax) : 0,
-      };
-      if (img) {
-        payload.imageUri = img;
-      }
-      onDataChange(payload);
-    },
-    [onDataChange],
-  );
-
-  // ----- Handlers -----
-  const handlePriceChange = useCallback(
-    (text: string) => {
-      // Only allow digits and a single decimal point
-      const filtered = text.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
-      setPrice(filtered);
-      propagate(filtered, unit, taxRate, imageUri);
-    },
-    [unit, taxRate, imageUri, propagate],
-  );
-
-  const handleUnitChange = useCallback(
-    (val: string) => {
-      setUnit(val);
-      propagate(price, val, taxRate, imageUri);
-    },
-    [price, taxRate, imageUri, propagate],
-  );
-
-  const handleTaxRateChange = useCallback(
-    (text: string) => {
-      const filtered = text.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
-      setTaxRate(filtered);
-      propagate(price, unit, filtered, imageUri);
-    },
-    [price, unit, imageUri, propagate],
-  );
-
-  const handleImageSelected = useCallback(
-    (uri: string) => {
-      setImageUri(uri);
-      propagate(price, unit, taxRate, uri);
-    },
-    [price, unit, taxRate, propagate],
-  );
-
-  const handleImageRemoved = useCallback(() => {
-    setImageUri(null);
-    propagate(price, unit, taxRate, null);
-  }, [price, unit, taxRate, propagate]);
+  const { control } = useFormContext<FieldValues>();
 
   return (
     <View className="gap-6 py-4">
@@ -87,43 +28,118 @@ export function Step2Pricing({ onDataChange, fieldErrors, initialData }: Step2Pr
         <Text variant="label-medium" color="charcoal">
           Product Image
         </Text>
-        <ImageUploader
-          imageUri={imageUri}
-          onImageSelected={handleImageSelected}
-          onImageRemoved={handleImageRemoved}
+        <Controller
+          name="imageUri"
+          control={control}
+          render={({ field: { onChange, value } }) => (
+            <ImageUploader
+              imageUri={(value as string) ?? null}
+              onImageSelected={onChange}
+              onImageRemoved={() => onChange(null)}
+            />
+          )}
         />
       </View>
 
-      {/* ---- Price ---- */}
-      <FormInput
-        label="Price"
-        value={price}
-        onChangeText={handlePriceChange}
-        placeholder="0.00"
-        keyboardType="decimal-pad"
-        error={fieldErrors.price}
-        required
+      {/* ---- Price (numeric) ---- */}
+      <Controller
+        name="price"
+        control={control}
+        render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => {
+          const displayValue = value != null ? String(value) : "";
+          return (
+            <View className="gap-1.5">
+              <View className="flex-row items-center gap-0.5">
+                <Text variant="label-medium" color="charcoal">
+                  Price
+                </Text>
+                <Text variant="caption" color="ember" className="ml-0.5">
+                  *
+                </Text>
+              </View>
+              <View
+                className={`flex-row items-center bg-surface border rounded-lg h-11 px-3 ${
+                  error ? "border-ember-orange" : "border-stone-border"
+                }`}
+              >
+                <TextInput
+                  className="flex-1 font-body text-[15px] text-charcoal p-0"
+                  placeholder="0.00"
+                  placeholderTextColor="#848281"
+                  value={displayValue}
+                  onChangeText={(text) => {
+                    // Only allow digits and a single decimal point
+                    const filtered = text
+                      .replace(/[^0-9.]/g, "")
+                      .replace(/(\..*)\./g, "$1");
+                    const num = parseFloat(filtered);
+                    onChange(isNaN(num) ? undefined : num);
+                  }}
+                  onBlur={onBlur}
+                  keyboardType="decimal-pad"
+                />
+              </View>
+              {error && (
+                <Text variant="caption" color="ember">
+                  {error.message}
+                </Text>
+              )}
+            </View>
+          );
+        }}
       />
 
       {/* ---- Unit ---- */}
-      <FormSelect
+      <FormSelectController
+        name="unit"
+        control={control}
         label="Unit"
-        value={unit}
-        onChange={handleUnitChange}
         options={UNIT_OPTIONS}
         placeholder="Select unit"
-        error={fieldErrors.unit}
         required
       />
 
-      {/* ---- Tax Rate ---- */}
+      {/* ---- Tax Rate (numeric) ---- */}
       <View className="gap-1.5">
-        <FormInput
-          label="Tax Rate"
-          value={taxRate}
-          onChangeText={handleTaxRateChange}
-          placeholder="0"
-          keyboardType="decimal-pad"
+        <Controller
+          name="taxRate"
+          control={control}
+          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => {
+            const displayValue = value != null ? String(value) : "";
+            return (
+              <View className="gap-1.5">
+                <Text variant="label-medium" color="charcoal">
+                  Tax Rate
+                </Text>
+                <View
+                  className={`flex-row items-center bg-surface border rounded-lg h-11 px-3 ${
+                    error ? "border-ember-orange" : "border-stone-border"
+                  }`}
+                >
+                  <TextInput
+                    className="flex-1 font-body text-[15px] text-charcoal p-0"
+                    placeholder="0"
+                    placeholderTextColor="#848281"
+                    value={displayValue}
+                    onChangeText={(text) => {
+                      const filtered = text
+                        .replace(/[^0-9.]/g, "")
+                        .replace(/(\..*)\./g, "$1");
+                      const num = parseFloat(filtered);
+                      onChange(isNaN(num) ? 0 : num);
+                    }}
+                    onBlur={onBlur}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
+                {error && (
+                  <Text variant="caption" color="ember">
+                    {error.message}
+                  </Text>
+                )}
+              </View>
+            );
+          }}
         />
         <Text variant="caption" color="ash">
           Enter a percentage (e.g., 18 for 18%)

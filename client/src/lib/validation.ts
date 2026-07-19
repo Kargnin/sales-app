@@ -36,3 +36,15 @@ export const inviteAcceptSchema = z.object({
 });
 
 export type InviteAcceptFormValues = z.infer<typeof inviteAcceptSchema>;
+
+/** Zod schema for editing a product (client-side). Numeric conversion handled by Controller renders. */
+export const productEditSchema = z.object({
+  name: z.string().min(1, "Product name is required").max(255),
+  description: z.string().optional().default(""),
+  price: z.number({ required_error: "Price is required" }).positive("Price must be a positive number"),
+  stockQuantity: z.number().int("Stock must be a whole number").nonnegative("Stock cannot be negative"),
+  category: z.string().optional().default(""),
+  unit: z.string().optional().default(""),
+  imageUri: z.string().nullable().optional(),
+});
+export type ProductEditFormValues = z.infer<typeof productEditSchema>;

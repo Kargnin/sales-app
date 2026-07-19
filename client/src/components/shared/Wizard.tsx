@@ -1,8 +1,11 @@
-import { useState, useCallback, useRef, Component } from "react";
+import { useState, useCallback, useRef, useEffect, Component } from "react";
 import { View, TouchableOpacity, Alert, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import type { ZodSchema } from "zod";
+import { useForm, FormProvider } from "react-hook-form";
+import type { UseFormReturn, FieldValues } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Text } from "../ui/text";
 import { Button } from "../ui/button";
 import { WizardStepIndicator } from "./WizardStepIndicator";
@@ -95,6 +98,40 @@ class StepErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
 }
 
 // ---------------------------------------------------------------------------
+// Inner: per-step FormProvider wrapper
+// ---------------------------------------------------------------------------
+
+/**
+ * Holds the react-hook-form `useForm` instance for the current step.
+ * The `key` prop on this component forces a fresh `useForm` each time the
+ * step changes, so `defaultValues` and `resolver` always match the active step.
+ */
+function WizardStepWrapper({
+  step,
+  initialData,
+  children,
+  onFormReady,
+}: {
+  step: WizardStep;
+  initialData: Record<string, any>;
+  children: React.ReactNode;
+  onFormReady: (form: UseFormReturn<FieldValues> | null) => void;
+}) {
+  const methods = useForm({
+    defaultValues: initialData,
+  });
+
+  useEffect(() => {
+    onFormReady(methods);
+    return () => {
+      onFormReady(null);
+    };
+  }, [methods, onFormReady]);
+
+  return <FormProvider {...methods}>{children}</FormProvider>;
+}
+
+// ---------------------------------------------------------------------------
 // Wizard
 // ---------------------------------------------------------------------------
 
@@ -106,6 +143,7 @@ class StepErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
  *
  * Handles:
  *  - Step-by-step navigation with optional per-step Zod validation
+ *    (powered by react-hook-form + zodResolver)
  *  - Submission via `onComplete` with loading state
  *  - Error display when submission fails
  *  - Error boundary for step-rendering crashes
@@ -123,8 +161,16 @@ export function Wizard({ config }: WizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const dataRef = useRef<Record<string, any>>({});
+
+  // react-hook-form methods for the current step (set by WizardStepWrapper)
+  const formRef = useRef<UseFormReturn<FieldValues> | null>(null);
+  const handleFormReady = useCallback(
+    (form: UseFormReturn<FieldValues> | null) => {
+      formRef.current = form;
+    },
+    [],
+  );
 
   // ----- derived -----
   const isLastStep = currentStep === steps.length - 1;
@@ -135,8 +181,6 @@ export function Wizard({ config }: WizardProps) {
     (newData: Record<string, any>) => {
       dataRef.current = { ...dataRef.current, ...newData };
       setSubmitError(null);
-      // Clear field errors when user types
-      setFieldErrors({});
     },
     [],
   );
@@ -144,25 +188,18 @@ export function Wizard({ config }: WizardProps) {
   const handleBack = useCallback(() => {
     setCurrentStep((prev) => Math.max(0, prev - 1));
     setSubmitError(null);
-    setFieldErrors({});
   }, []);
 
   const handleNext = useCallback(async () => {
-    // 1. Validate current step if a schema is provided
-    const schema = currentStepConfig.validationSchema;
-    if (schema) {
-      const result = schema.safeParse(dataRef.current);
-      if (!result.success) {
-        const errors: Record<string, string> = {};
-        for (const issue of result.error.errors) {
-          const field = issue.path[0] as string;
-          if (!errors[field]) {
-            errors[field] = issue.message;
-          }
-        }
-        setFieldErrors(errors);
-        return;
-      }
+    // 1. Validate current step via react-hook-form
+    const form = formRef.current;
+    if (form) {
+      const isValid = await form.trigger();
+      if (!isValid) return;
+
+      // Merge validated data into the accumulator
+      const stepData = form.getValues();
+      dataRef.current = { ...dataRef.current, ...stepData };
     }
 
     // 2. Submit on the last step, otherwise advance
@@ -184,7 +221,7 @@ export function Wizard({ config }: WizardProps) {
     } else {
       setCurrentStep((prev) => prev + 1);
     }
-  }, [currentStepConfig, isLastStep, onComplete, onClose]);
+  }, [isLastStep, onComplete, onClose]);
 
   // ----- guard (should never happen, but keep TS happy) -----
   if (!currentStepConfig) {
@@ -229,14 +266,21 @@ export function Wizard({ config }: WizardProps) {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 16 }}
       >
-        {/* key={currentStep} resets the error boundary when the step changes */}
-        <StepErrorBoundary key={currentStep} onClose={onClose}>
-          <ActiveStepComponent
-            onDataChange={handleDataChange}
-            fieldErrors={fieldErrors}
-            initialData={dataRef.current}
-          />
-        </StepErrorBoundary>
+        {/* key={currentStep} forces a fresh useForm per step */}
+        <WizardStepWrapper
+          key={currentStep}
+          step={currentStepConfig}
+          initialData={dataRef.current}
+          onFormReady={handleFormReady}
+        >
+          <StepErrorBoundary onClose={onClose}>
+            <ActiveStepComponent
+              onDataChange={handleDataChange}
+              fieldErrors={{}}
+              initialData={dataRef.current}
+            />
+          </StepErrorBoundary>
+        </WizardStepWrapper>
       </ScrollView>
 
       {/* ---- Submission error banner ---- */}

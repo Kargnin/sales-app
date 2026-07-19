@@ -15,6 +15,8 @@ interface FormInputProps {
   /** Max character length. Allows soft truncation without losing typed content. */
   maxLength?: number;
   editable?: boolean;
+  /** Called when the field loses focus (for react-hook-form integration). */
+  onBlur?: () => void;
 }
 
 export function FormInput({
@@ -28,6 +30,7 @@ export function FormInput({
   required,
   maxLength,
   editable = true,
+  onBlur,
 }: FormInputProps) {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -67,7 +70,7 @@ export function FormInput({
           value={value}
           onChangeText={onChangeText}
           onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onBlur={() => { setIsFocused(false); onBlur?.(); }}
           multiline={multiline}
           textAlignVertical={multiline ? "top" : "center"}
           keyboardType={keyboardType}

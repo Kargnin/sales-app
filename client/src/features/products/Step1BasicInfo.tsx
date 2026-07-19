@@ -1,6 +1,8 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { View } from "react-native";
-import { FormInput, SearchablePillSelector } from "../../components/shared";
+import { useFormContext, Controller } from "react-hook-form";
+import type { FieldValues } from "react-hook-form";
+import { FormInputController, SearchablePillSelector } from "../../components/shared";
 import { Text } from "../../components/ui/text";
 import { useProducts } from "../../hooks/queries/useProducts";
 
@@ -11,16 +13,14 @@ interface Step1BasicInfoProps {
 }
 
 export function Step1BasicInfo({ onDataChange, fieldErrors, initialData }: Step1BasicInfoProps) {
-  const [name, setName] = useState(initialData.name ?? "");
-  const [description, setDescription] = useState(initialData.description ?? "");
-  const [category, setCategory] = useState(initialData.category ?? "");
+  const { control } = useFormContext<FieldValues>();
 
   // ----- Fetch products from React Query cache / API -----
   const { data: products } = useProducts();
 
   // ----- Derive categories list from cached products dynamically -----
   const [customCategories, setCustomCategories] = useState<string[]>([]);
-  
+
   const allCategories = useMemo(() => {
     const dbCats = products
       ? (products.map((p) => p.category).filter(Boolean) as string[])
@@ -28,50 +28,21 @@ export function Step1BasicInfo({ onDataChange, fieldErrors, initialData }: Step1
     return [...new Set([...dbCats, ...customCategories])];
   }, [products, customCategories]);
 
-  const propagate = useCallback(
-    (n: string, d: string, c: string) => {
-      onDataChange({ name: n, description: d, category: c });
-    },
-    [onDataChange],
-  );
-
-  const handleNameChange = useCallback(
-    (text: string) => { setName(text); propagate(text, description, category); },
-    [description, category, propagate],
-  );
-
-  const handleDescriptionChange = useCallback(
-    (text: string) => { setDescription(text); propagate(name, text, category); },
-    [name, category, propagate],
-  );
-
-  const handleCategoryChange = useCallback(
-    (cat: string) => {
-      setCategory(cat);
-      if (cat && !customCategories.includes(cat)) {
-        setCustomCategories((prev) => [...prev, cat]);
-      }
-      propagate(name, description, cat);
-    },
-    [name, description, customCategories, propagate],
-  );
-
   return (
     <View className="gap-6 py-4">
-      <FormInput
+      <FormInputController
+        name="name"
+        control={control}
         label="Product Name"
-        value={name}
-        onChangeText={handleNameChange}
         placeholder="Enter product name"
-        error={fieldErrors.name}
         required
       />
 
       <View className="gap-1.5">
-        <FormInput
+        <FormInputController
+          name="description"
+          control={control}
           label="Product Description"
-          value={description}
-          onChangeText={handleDescriptionChange}
           placeholder="Describe your product"
           multiline
         />
@@ -80,12 +51,23 @@ export function Step1BasicInfo({ onDataChange, fieldErrors, initialData }: Step1
         </Text>
       </View>
 
-      <SearchablePillSelector
-        label="Category"
-        items={allCategories}
-        value={category}
-        onChange={handleCategoryChange}
-        placeholder="Search or type a new category"
+      <Controller
+        name="category"
+        control={control}
+        render={({ field: { onChange, value } }) => (
+          <SearchablePillSelector
+            label="Category"
+            items={allCategories}
+            value={(value as string) ?? ""}
+            onChange={(cat) => {
+              onChange(cat);
+              if (cat && !customCategories.includes(cat)) {
+                setCustomCategories((prev) => [...prev, cat]);
+              }
+            }}
+            placeholder="Search or type a new category"
+          />
+        )}
       />
     </View>
   );
