@@ -40,11 +40,17 @@ export async function apiClient<T = unknown>(
 
   const url = `${API_BASE_URL}${endpoint}`;
 
-  const response = await fetch(url, {
-    ...config,
-    headers,
-    body: config.body ? JSON.stringify(config.body) : undefined,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...config,
+      headers,
+      body: config.body ? JSON.stringify(config.body) : undefined,
+    });
+  } catch (error: unknown) {
+    console.error(`[apiClient] Network request failed for ${url}:`, error);
+    throw new Error("Unable to connect to the server. Please verify that the backend is running and your device is on the same network.");
+  }
 
   if (response.status === 401 && !config._retry) {
     const endpointLower = endpoint.toLowerCase();
@@ -73,11 +79,17 @@ export async function apiClient<T = unknown>(
     isRefreshing = true;
 
     try {
-      const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
-      });
+      let refreshResponse: Response;
+      try {
+        refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refreshToken }),
+        });
+      } catch (error: unknown) {
+        console.error("[apiClient] Network request failed for token refresh:", error);
+        throw new Error("Unable to connect to the server. Please verify that the backend is running.");
+      }
 
       if (!refreshResponse.ok) throw new Error("Refresh failed");
 

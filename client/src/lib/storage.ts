@@ -7,7 +7,7 @@ export const storage = {
     if (isWeb) {
       return localStorage.getItem(key);
     }
-    const { default: SecureStore } = await import("expo-secure-store");
+    const SecureStore = await import("expo-secure-store");
     return SecureStore.getItemAsync(key);
   },
 
@@ -16,7 +16,7 @@ export const storage = {
       localStorage.setItem(key, value);
       return;
     }
-    const { default: SecureStore } = await import("expo-secure-store");
+    const SecureStore = await import("expo-secure-store");
     return SecureStore.setItemAsync(key, value);
   },
 
@@ -25,7 +25,7 @@ export const storage = {
       localStorage.removeItem(key);
       return;
     }
-    const { default: SecureStore } = await import("expo-secure-store");
+    const SecureStore = await import("expo-secure-store");
     return SecureStore.deleteItemAsync(key);
   },
 };

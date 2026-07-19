@@ -46,6 +46,14 @@ export interface Product {
   sku: string | null;
   price: string;
   stockQuantity: number;
+  imageUrl: string | null;
+  category: string | null;
+  description: string | null;
+  unit: string | null;
+  weight: string | null;
+  dimensions: string | null;
+  material: string | null;
+  stockStatus: "in_stock" | "low_stock" | "out_of_stock";
   createdAt: string;
 }
 
