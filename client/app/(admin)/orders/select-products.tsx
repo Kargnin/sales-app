@@ -13,14 +13,9 @@ import {
   CategoryTabs,
 } from "../../../src/features/products";
 import type { Product } from "../../../src/types";
+import { formatCurrency } from "../../../src/lib/format";
 
 const CATEGORIES = ["All", "Drinks", "Snacks", "Dairy", "Pantry"];
-
-function formatCurrency(amount: string | number): string {
-  const num = typeof amount === "string" ? parseFloat(amount) : amount;
-  if (isNaN(num)) return "₹0.00";
-  return `₹${num.toFixed(2)}`;
-}
 
 function ProductSelectCard({
   product,

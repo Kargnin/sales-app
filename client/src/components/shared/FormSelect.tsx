@@ -1,13 +1,13 @@
-import { useState, useCallback } from "react";
-import {
-  View,
-  TouchableOpacity,
-  Modal,
-  Pressable,
-  FlatList,
-} from "react-native";
+import { useState, useCallback, useRef } from "react";
+import { View, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  BottomSheetModal,
+  BottomSheetBackdrop,
+  BottomSheetFlatList,
+} from "@gorhom/bottom-sheet";
+import { ReduceMotion, useReducedMotion } from "react-native-reanimated";
 import { cn } from "../../lib/utils";
 import { Text } from "../ui/text";
 
@@ -24,6 +24,8 @@ interface FormSelectProps {
   placeholder?: string;
   error?: string;
   required?: boolean;
+  /** Called when the field loses focus (for react-hook-form integration). */
+  onBlur?: () => void;
 }
 
 export function FormSelect({
@@ -34,9 +36,11 @@ export function FormSelect({
   placeholder = "Select...",
   error,
   required,
+  onBlur,
 }: FormSelectProps) {
   const insets = useSafeAreaInsets();
-  const [isOpen, setIsOpen] = useState(false);
+  const reducedMotion = useReducedMotion();
+  const sheetRef = useRef<BottomSheetModal>(null);
 
   const selectedLabel = options.find((o) => o.value === value)?.label ?? "";
   const hasSelection = value !== "" && options.some((o) => o.value === value);
@@ -44,10 +48,19 @@ export function FormSelect({
   const handleSelect = useCallback(
     (val: string) => {
       onChange(val);
-      setIsOpen(false);
+      sheetRef.current?.dismiss();
+      onBlur?.();
     },
-    [onChange],
+    [onChange, onBlur],
   );
+
+  const openSheet = useCallback(() => {
+    sheetRef.current?.present();
+  }, []);
+
+  const closeSheet = useCallback(() => {
+    sheetRef.current?.dismiss();
+  }, []);
 
   return (
     <View className="gap-1.5">
@@ -65,7 +78,7 @@ export function FormSelect({
 
       {/* Select trigger */}
       <TouchableOpacity
-        onPress={() => setIsOpen(true)}
+        onPress={openSheet}
         activeOpacity={0.7}
         className={cn(
           "h-11 flex-row items-center bg-surface border rounded-lg px-3",
@@ -91,93 +104,90 @@ export function FormSelect({
       ) : null}
 
       {/* Options bottom sheet */}
-      <Modal
-        visible={isOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setIsOpen(false)}
+      <BottomSheetModal
+        ref={sheetRef}
+        enableDynamicSizing
+        maxDynamicContentSize={400}
+        enablePanDownToClose
+        bottomInset={insets.bottom + 16}
+        handleIndicatorStyle={{ width: 40, height: 4, borderRadius: 2, backgroundColor: "#d1cfce" }}
+        backgroundStyle={{ backgroundColor: "#faf9f7", borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop
+            {...props}
+            appearsOnIndex={0}
+            disappearsOnIndex={-1}
+            pressBehavior="close"
+          />
+        )}
+        overrideReduceMotion={
+          reducedMotion ? ReduceMotion.Always : ReduceMotion.Never
+        }
       >
-        <Pressable
-          className="flex-1 bg-midnight/40"
-          onPress={() => setIsOpen(false)}
+        {/* Sheet label */}
+        <Text
+          variant="heading-sm"
+          color="charcoal"
+          className="px-5 mb-4"
         >
-          <View />
-        </Pressable>
-        <View
-          className="bg-canvas rounded-t-2xl"
-          style={{ paddingBottom: insets.bottom + 16 }}
-        >
-          {/* Handle bar */}
-          <View className="items-center pt-3 pb-4">
-            <View className="w-10 h-1 rounded-full bg-stone-border" />
-          </View>
+          {label}
+        </Text>
 
-          {/* Sheet label */}
-          <Text
-            variant="heading-sm"
-            color="charcoal"
-            className="px-5 mb-4"
-          >
-            {label}
-          </Text>
-
-          {/* Options list */}
-          {options.length === 0 ? (
-            <View className="px-5 py-8 items-center">
-              <Text variant="body" color="ash">
-                No options available
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={options}
-              keyExtractor={(item) => item.value}
-              renderItem={({ item }) => {
-                const isSelected = item.value === value;
-                return (
-                  <TouchableOpacity
-                    onPress={() => handleSelect(item.value)}
-                    className={cn(
-                      "flex-row items-center px-5 py-3.5 mx-3 rounded-lg",
-                      isSelected && "bg-midnight",
-                    )}
-                    accessibilityLabel={item.label}
-                    accessibilityRole="button"
-                  >
-                    <Text
-                      variant="body"
-                      color={isSelected ? "surface" : "graphite"}
-                      className="flex-1"
-                    >
-                      {item.label}
-                    </Text>
-                    {isSelected && (
-                      <Ionicons
-                        name="checkmark"
-                        size={18}
-                        color="#ffffff"
-                      />
-                    )}
-                  </TouchableOpacity>
-                );
-              }}
-              className="max-h-80"
-            />
-          )}
-
-          {/* Close button */}
-          <TouchableOpacity
-            onPress={() => setIsOpen(false)}
-            className="bg-midnight rounded-full py-3.5 mx-5 mt-4 items-center"
-            accessibilityLabel="Close"
-            accessibilityRole="button"
-          >
-            <Text variant="label-medium" color="surface">
-              Close
+        {/* Options list */}
+        {options.length === 0 ? (
+          <View className="px-5 py-8 items-center">
+            <Text variant="body" color="ash">
+              No options available
             </Text>
-          </TouchableOpacity>
-        </View>
-      </Modal>
+          </View>
+        ) : (
+          <BottomSheetFlatList
+            data={options}
+            keyExtractor={(item) => item.value}
+            renderItem={({ item }) => {
+              const isSelected = item.value === value;
+              return (
+                <TouchableOpacity
+                  onPress={() => handleSelect(item.value)}
+                  className={cn(
+                    "flex-row items-center px-5 py-3.5 mx-3 rounded-lg",
+                    isSelected && "bg-midnight",
+                  )}
+                  accessibilityLabel={item.label}
+                  accessibilityRole="button"
+                >
+                  <Text
+                    variant="body"
+                    color={isSelected ? "surface" : "graphite"}
+                    className="flex-1"
+                  >
+                    {item.label}
+                  </Text>
+                  {isSelected && (
+                    <Ionicons
+                      name="checkmark"
+                      size={18}
+                      color="#ffffff"
+                    />
+                  )}
+                </TouchableOpacity>
+              );
+            }}
+          />
+        )}
+
+        {/* Close button */}
+        <TouchableOpacity
+          onPress={closeSheet}
+          className="bg-midnight rounded-full py-3.5 mx-5 mt-4 items-center"
+          accessibilityLabel="Close"
+          accessibilityRole="button"
+        >
+          <Text variant="label-medium" color="surface">
+            Close
+          </Text>
+        </TouchableOpacity>
+      </BottomSheetModal>
     </View>
   );
 }

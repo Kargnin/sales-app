@@ -4,6 +4,7 @@ import { Card } from "../../components/ui/card";
 import { Text } from "../../components/ui/text";
 import { StockBadge } from "./StockBadge";
 import { cn } from "../../lib/utils";
+import { formatCurrency } from "../../lib/format";
 import type { Product } from "../../types";
 
 interface ProductCardProps {
@@ -30,12 +31,6 @@ function ProductImage({ imageUrl, name }: { imageUrl: string | null; name: strin
       <Ionicons name="cube-outline" size={32} color="#848281" />
     </View>
   );
-}
-
-function formatCurrency(amount: string | number): string {
-  const num = typeof amount === "string" ? parseFloat(amount) : amount;
-  if (isNaN(num)) return "₹0.00";
-  return `₹${num.toFixed(2)}`;
 }
 
 export function ProductCard({ product, onPress, onLongPress, className }: ProductCardProps) {

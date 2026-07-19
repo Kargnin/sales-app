@@ -1,7 +1,12 @@
-import { useState, useMemo } from "react";
-import { View, TextInput, TouchableOpacity, Modal, Pressable } from "react-native";
+import { useState, useMemo, useRef, useCallback } from "react";
+import { View, TextInput, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  BottomSheetModal,
+  BottomSheetBackdrop,
+} from "@gorhom/bottom-sheet";
+import { ReduceMotion, useReducedMotion } from "react-native-reanimated";
 import { Text } from "../ui/text";
 
 export interface FilterOption<T> {
@@ -49,8 +54,10 @@ export function FilterToolbar<T extends Record<string, any>>({
   children,
 }: FilterToolbarProps<T>) {
   const insets = useSafeAreaInsets();
+  const reducedMotion = useReducedMotion();
+  const sheetRef = useRef<BottomSheetModal>(null);
+
   const [search, setSearch] = useState("");
-  const [sheetVisible, setSheetVisible] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string>(
     defaultFilterKey ?? (filterOptions ? "__all" : "")
   );
@@ -93,6 +100,14 @@ export function FilterToolbar<T extends Record<string, any>>({
     ? [{ key: "__all", label: "All" }, ...filterOptions.map(({ key, label }) => ({ key, label }))]
     : [];
 
+  const openSheet = useCallback(() => {
+    sheetRef.current?.present();
+  }, []);
+
+  const closeSheet = useCallback(() => {
+    sheetRef.current?.dismiss();
+  }, []);
+
   return (
     <>
       {/* Search Bar */}
@@ -119,7 +134,7 @@ export function FilterToolbar<T extends Record<string, any>>({
           )}
           {hasOptions && (
             <TouchableOpacity
-              onPress={() => setSheetVisible(true)}
+              onPress={openSheet}
               className="relative"
               accessibilityLabel="Filter and sort options"
               accessibilityRole="button"
@@ -138,24 +153,26 @@ export function FilterToolbar<T extends Record<string, any>>({
       </View>
 
       {/* Filter / Sort Bottom Sheet */}
-      <Modal
-        visible={sheetVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setSheetVisible(false)}
+      <BottomSheetModal
+        ref={sheetRef}
+        enableDynamicSizing
+        enablePanDownToClose
+        bottomInset={insets.bottom + 16}
+        handleIndicatorStyle={{ width: 40, height: 4, borderRadius: 2, backgroundColor: "#d1cfce" }}
+        backgroundStyle={{ backgroundColor: "#faf9f7", borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+        backdropComponent={(props) => (
+          <BottomSheetBackdrop
+            {...props}
+            appearsOnIndex={0}
+            disappearsOnIndex={-1}
+            pressBehavior="close"
+          />
+        )}
+        overrideReduceMotion={
+          reducedMotion ? ReduceMotion.Always : ReduceMotion.Never
+        }
       >
-        <Pressable
-          className="flex-1 bg-midnight/40"
-          onPress={() => setSheetVisible(false)}
-        >
-          <View />
-        </Pressable>
-        <View className="bg-canvas rounded-t-2xl px-5" style={{ paddingBottom: insets.bottom + 16 }}>
-          {/* Handle */}
-          <View className="items-center pt-3 pb-4">
-            <View className="w-10 h-1 rounded-full bg-stone-border" />
-          </View>
-
+        <View className="px-5 pb-4">
           {/* Filter Section */}
           {allFilterPills.length > 1 && (
             <View className="mb-5">
@@ -216,7 +233,7 @@ export function FilterToolbar<T extends Record<string, any>>({
 
           {/* Done */}
           <TouchableOpacity
-            onPress={() => setSheetVisible(false)}
+            onPress={closeSheet}
             className="bg-midnight rounded-full py-3.5 items-center"
             accessibilityLabel="Apply filters"
             accessibilityRole="button"
@@ -226,7 +243,7 @@ export function FilterToolbar<T extends Record<string, any>>({
             </Text>
           </TouchableOpacity>
         </View>
-      </Modal>
+      </BottomSheetModal>
 
       {children(result)}
     </>
