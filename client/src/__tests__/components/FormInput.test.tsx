@@ -23,7 +23,7 @@ describe("FormInput", () => {
   });
 
   it("displays the current value", async () => {
-    const { UNSAFE_getByType } = await render(
+    const { getByPlaceholderText } = await render(
       <FormInput
         label="Name"
         value="Widget"

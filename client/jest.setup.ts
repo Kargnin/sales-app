@@ -135,13 +135,22 @@ jest.mock("@gorhom/bottom-sheet", () => {
     const [visible, setVisible] = React.useState(false);
     React.useImperativeHandle(ref, () => ({
       present: () => setVisible(true),
-      dismiss: () => setVisible(false),
+      dismiss: () => {
+        setVisible(false);
+        props.onDismiss?.();
+      },
       snapToIndex: () => {},
       snapToPosition: () => {},
       expand: () => {},
-      close: () => setVisible(false),
+      close: () => {
+        setVisible(false);
+        props.onDismiss?.();
+      },
       collapse: () => {},
-      forceClose: () => setVisible(false),
+      forceClose: () => {
+        setVisible(false);
+        props.onDismiss?.();
+      },
     }));
     if (!visible) return null;
     return React.createElement(

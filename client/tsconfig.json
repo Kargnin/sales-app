@@ -21,7 +21,6 @@
     "${configDir}/jest.config.ts",
     "${configDir}/jest.setup.ts",
     "${configDir}/android",
-    "${configDir}/ios",
-    "${configDir}/src/__tests__"
+    "${configDir}/ios"
   ]
 }

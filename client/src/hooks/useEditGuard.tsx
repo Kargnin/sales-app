@@ -17,7 +17,7 @@ interface BeforeRemoveEvent {
 }
 
 /** Navigation type compatible with expo-router's useNavigation(). */
-interface EditGuardNavigation {
+export interface EditGuardNavigation {
   addListener: (
     event: "beforeRemove",
     callback: (e: BeforeRemoveEvent) => void,
