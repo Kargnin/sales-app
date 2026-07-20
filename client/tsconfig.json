@@ -2,6 +2,7 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "types": ["jest"],
     "paths": {
       "@/*": ["./*"],
       "@src/*": ["./src/*"],
@@ -11,5 +12,15 @@
       "@lib/*": ["./src/lib/*"],
       "@types/*": ["./src/types/*"]
     }
-  }
+  },
+  "exclude": [
+    "${configDir}/node_modules",
+    "${configDir}/babel.config.js",
+    "${configDir}/metro.config.js",
+    "${configDir}/jest.config.js",
+    "${configDir}/jest.config.ts",
+    "${configDir}/jest.setup.ts",
+    "${configDir}/android",
+    "${configDir}/ios"
+  ]
 }
