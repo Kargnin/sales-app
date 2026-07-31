@@ -62,7 +62,10 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 
-class StepErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class StepErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -119,6 +122,9 @@ function WizardStepWrapper({
 }) {
   const methods = useForm({
     defaultValues: initialData,
+    resolver: step.validationSchema
+      ? zodResolver(step.validationSchema as any)
+      : undefined,
   });
 
   useEffect(() => {
@@ -177,17 +183,22 @@ export function Wizard({ config }: WizardProps) {
   const currentStepConfig = steps[currentStep];
 
   // ----- handlers -----
-  const handleDataChange = useCallback(
-    (newData: Record<string, any>) => {
-      dataRef.current = { ...dataRef.current, ...newData };
-      setSubmitError(null);
-    },
-    [],
-  );
+  const handleDataChange = useCallback((newData: Record<string, any>) => {
+    dataRef.current = { ...dataRef.current, ...newData };
+    setSubmitError(null);
+  }, []);
 
   const handleBack = useCallback(() => {
     setCurrentStep((prev) => Math.max(0, prev - 1));
     setSubmitError(null);
+  }, []);
+
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   const handleNext = useCallback(async () => {
@@ -210,13 +221,17 @@ export function Wizard({ config }: WizardProps) {
         await onComplete(dataRef.current);
         onClose();
       } catch (err) {
-        const message =
-          err instanceof Error
-            ? err.message
-            : "Something went wrong. Please try again.";
-        setSubmitError(message);
+        if (isMountedRef.current) {
+          const message =
+            err instanceof Error
+              ? err.message
+              : "Something went wrong. Please try again.";
+          setSubmitError(message);
+        }
       } finally {
-        setIsSubmitting(false);
+        if (isMountedRef.current) {
+          setIsSubmitting(false);
+        }
       }
     } else {
       setCurrentStep((prev) => prev + 1);
@@ -233,18 +248,28 @@ export function Wizard({ config }: WizardProps) {
   const showBackButton = currentStep > 0;
 
   return (
-    <View className="flex-1 bg-canvas" style={{ paddingBottom: tabBarClearance }}>
+    <View
+      className="flex-1 bg-canvas"
+      style={{ paddingBottom: tabBarClearance }}
+    >
       {/* ---- Header ---- */}
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-stone-border bg-surface">
         <TouchableOpacity
           onPress={currentStep > 0 ? handleBack : onClose}
           className="w-8 h-8 rounded-full items-center justify-center bg-surface-recessed"
-          accessibilityLabel={currentStep > 0 ? "Go back to previous step" : "Close wizard"}
+          accessibilityLabel={
+            currentStep > 0 ? "Go back to previous step" : "Close wizard"
+          }
           accessibilityRole="button"
         >
           <Ionicons name="chevron-back" size={20} color="#474645" />
         </TouchableOpacity>
-        <Text variant="heading-sm" color="charcoal" numberOfLines={1} className="flex-1 text-center mx-3">
+        <Text
+          variant="heading-sm"
+          color="charcoal"
+          numberOfLines={1}
+          className="flex-1 text-center mx-3"
+        >
           {title}
         </Text>
         <TouchableOpacity

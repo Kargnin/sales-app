@@ -8,3 +8,11 @@ export function useShops() {
     queryFn: () => apiClient<Shop[]>("/api/shops"),
   });
 }
+
+export function useShop(id?: string) {
+  return useQuery({
+    queryKey: ["shops", id],
+    queryFn: () => apiClient<Shop>(`/api/shops/${id}`),
+    enabled: Boolean(id),
+  });
+}

@@ -1,9 +1,10 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import { describeIfDb } from './helpers/dbAvailable.js';
 import request from 'supertest';
 import { app } from '../index.js';
 import { v4 as uuidv4 } from 'uuid';
 
-describe('Auth, RBAC & Multi-Tenancy Integration', () => {
+describeIfDb('Auth, RBAC & Multi-Tenancy Integration', () => {
   let tenantAAdminToken: string;
   let tenantAAdminUser: any;
   let tenantASalesmanToken: string;
@@ -18,15 +19,13 @@ describe('Auth, RBAC & Multi-Tenancy Integration', () => {
   const tenantAEmail = `admin_a_${uuidv4().substring(0, 8)}@soap.com`;
 
   it('1. Business Registration - Successful', async () => {
-    const res = await request(app)
-      .post('/auth/register')
-      .send({
-        businessName: 'Tenant A Soap Co',
-        username: tenantAUsername,
-        password: 'password123',
-        email: tenantAEmail,
-        phone: '9999999991',
-      });
+    const res = await request(app).post('/auth/register').send({
+      businessName: 'Tenant A Soap Co',
+      username: tenantAUsername,
+      password: 'password123',
+      email: tenantAEmail,
+      phone: '9999999991',
+    });
 
     expect(res.status).toBe(201);
     expect(res.body.accessToken).toBeDefined();
@@ -41,38 +40,32 @@ describe('Auth, RBAC & Multi-Tenancy Integration', () => {
   });
 
   it('2. Business Registration - Fail on duplicate username', async () => {
-    const res = await request(app)
-      .post('/auth/register')
-      .send({
-        businessName: 'Another Corp',
-        username: tenantAUsername, // Duplicate
-        password: 'password123',
-      });
+    const res = await request(app).post('/auth/register').send({
+      businessName: 'Another Corp',
+      username: tenantAUsername, // Duplicate
+      password: 'password123',
+    });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Username is already taken');
   });
 
   it('3. Business Registration - Fail on invalid validation', async () => {
-    const res = await request(app)
-      .post('/auth/register')
-      .send({
-        businessName: 'Short',
-        username: 'ab', // too short (min 3)
-        password: '123', // too short (min 8)
-      });
+    const res = await request(app).post('/auth/register').send({
+      businessName: 'Short',
+      username: 'ab', // too short (min 3)
+      password: '123', // too short (min 8)
+    });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Validation failed');
   });
 
   it('4. Login - Successful', async () => {
-    const res = await request(app)
-      .post('/auth/login')
-      .send({
-        username: tenantAUsername,
-        password: 'password123',
-      });
+    const res = await request(app).post('/auth/login').send({
+      username: tenantAUsername,
+      password: 'password123',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.accessToken).toBeDefined();
@@ -80,12 +73,10 @@ describe('Auth, RBAC & Multi-Tenancy Integration', () => {
   });
 
   it('4b. Login - Successful with Email', async () => {
-    const res = await request(app)
-      .post('/auth/login')
-      .send({
-        username: tenantAEmail,
-        password: 'password123',
-      });
+    const res = await request(app).post('/auth/login').send({
+      username: tenantAEmail,
+      password: 'password123',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.accessToken).toBeDefined();
@@ -93,12 +84,10 @@ describe('Auth, RBAC & Multi-Tenancy Integration', () => {
   });
 
   it('5. Login - Fail on wrong credentials', async () => {
-    const res = await request(app)
-      .post('/auth/login')
-      .send({
-        username: tenantAUsername,
-        password: 'wrongpassword',
-      });
+    const res = await request(app).post('/auth/login').send({
+      username: tenantAUsername,
+      password: 'wrongpassword',
+    });
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBe('Invalid credentials');
@@ -140,12 +129,10 @@ describe('Auth, RBAC & Multi-Tenancy Integration', () => {
     tenantASalesmanUser = res.body;
 
     // Login as salesman to get token
-    const loginRes = await request(app)
-      .post('/auth/login')
-      .send({
-        username: salesmanUsername,
-        password: 'password123',
-      });
+    const loginRes = await request(app).post('/auth/login').send({
+      username: salesmanUsername,
+      password: 'password123',
+    });
     tenantASalesmanToken = loginRes.body.accessToken;
   });
 
@@ -165,14 +152,12 @@ describe('Auth, RBAC & Multi-Tenancy Integration', () => {
 
   it('10. Multi-Tenancy Isolation - Admin B cannot see or edit Tenant A users', async () => {
     // Register Tenant B
-    const registerRes = await request(app)
-      .post('/auth/register')
-      .send({
-        businessName: 'Tenant B Soap Co',
-        username: tenantBUsername,
-        password: 'password123',
-        email: 'admin_b@soap.com',
-      });
+    const registerRes = await request(app).post('/auth/register').send({
+      businessName: 'Tenant B Soap Co',
+      username: tenantBUsername,
+      password: 'password123',
+      email: 'admin_b@soap.com',
+    });
     tenantBAdminToken = registerRes.body.accessToken;
     tenantBAdminUser = registerRes.body.user;
 
@@ -183,7 +168,9 @@ describe('Auth, RBAC & Multi-Tenancy Integration', () => {
 
     expect(listRes.status).toBe(200);
     // Should NOT see Tenant A's salesman
-    const hasSalesmanA = listRes.body.some((u: any) => u.id === tenantASalesmanUser.id);
+    const hasSalesmanA = listRes.body.some(
+      (u: any) => u.id === tenantASalesmanUser.id,
+    );
     expect(hasSalesmanA).toBe(false);
 
     // Tenant B admin tries to toggle status of Tenant A salesman -> should return 404 not found
@@ -207,12 +194,10 @@ describe('Auth, RBAC & Multi-Tenancy Integration', () => {
     expect(patchRes.body.status).toBe('inactive');
 
     // Trying to login as deactivated salesman should fail
-    const loginRes = await request(app)
-      .post('/auth/login')
-      .send({
-        username: salesmanUsername,
-        password: 'password123',
-      });
+    const loginRes = await request(app).post('/auth/login').send({
+      username: salesmanUsername,
+      password: 'password123',
+    });
     expect(loginRes.status).toBe(401);
     expect(loginRes.body.error).toBe('Invalid credentials');
 

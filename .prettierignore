@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+coverage/
+android/
+ios/
+.expo/
+.hermes/
+.playwright-mcp/
+.agents/
+.claude/
+*.png
+*.lock
+package-lock.json

@@ -1,14 +1,15 @@
 import { describe, it, expect } from 'vitest';
+import { describeIfDb } from './helpers/dbAvailable.js';
 import request from 'supertest';
 import { app } from '../index.js';
 import { v4 as uuidv4 } from 'uuid';
 
-describe('Admin Product Catalog Management E2E Integration Tests', () => {
+describeIfDb('Admin Product Catalog Management E2E Integration Tests', () => {
   let adminToken: string;
   let adminUser: any;
   let salesmanToken: string;
   let salesmanUser: any;
-  
+
   let shopId: string;
   let productId: string;
   let secondProductId: string;
@@ -17,14 +18,12 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
   const salesmanUsername = `sales_${uuidv4().substring(0, 8)}`;
 
   it('1. Register Admin Business & Retrieve tenantId', async () => {
-    const res = await request(app)
-      .post('/auth/register')
-      .send({
-        businessName: 'SoapFactory Ltd',
-        username: adminUsername,
-        password: 'password123',
-        email: 'admin@soapfactory.com',
-      });
+    const res = await request(app).post('/auth/register').send({
+      businessName: 'SoapFactory Ltd',
+      username: adminUsername,
+      password: 'password123',
+      email: 'admin@soapfactory.com',
+    });
 
     expect(res.status).toBe(201);
     expect(res.body.accessToken).toBeDefined();
@@ -45,12 +44,10 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
     expect(res.status).toBe(201);
     salesmanUser = res.body;
 
-    const loginRes = await request(app)
-      .post('/auth/login')
-      .send({
-        username: salesmanUsername,
-        password: 'password123',
-      });
+    const loginRes = await request(app).post('/auth/login').send({
+      username: salesmanUsername,
+      password: 'password123',
+    });
 
     expect(loginRes.status).toBe(200);
     salesmanToken = loginRes.body.accessToken;
@@ -63,7 +60,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
       .send({
         name: 'Sparkle Lavender 500ml',
         sku: 'SPK-LAV-500',
-        price: 85.50,
+        price: 85.5,
         stockQuantity: 200,
       });
 
@@ -83,7 +80,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
       .send({
         name: 'Illegal Lavender 500ml',
         sku: 'SPK-ILL-500',
-        price: 40.00,
+        price: 40.0,
         stockQuantity: 10,
       });
 
@@ -107,7 +104,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
       .patch(`/api/products/${productId}`)
       .set('Authorization', `Bearer ${adminToken}`)
       .send({
-        price: 90.00,
+        price: 90.0,
         stockQuantity: 180,
       });
 
@@ -121,7 +118,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
       .patch(`/api/products/${productId}`)
       .set('Authorization', `Bearer ${salesmanToken}`)
       .send({
-        price: 10.00,
+        price: 10.0,
       });
 
     expect(res.status).toBe(403);
@@ -135,7 +132,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
       .send({
         name: 'Sparkle Mint 250ml',
         sku: 'SPK-MNT-250',
-        price: 45.00,
+        price: 45.0,
         stockQuantity: 100,
       });
 
@@ -184,7 +181,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
           {
             productId,
             quantity: 5,
-            unitPrice: 85.50,
+            unitPrice: 85.5,
           },
         ],
       });
@@ -206,14 +203,12 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
     const secondAdminUsername = `adminB_${uuidv4().substring(0, 8)}`;
 
     it('10. Register Admin B & Retrieve Tenant B context', async () => {
-      const res = await request(app)
-        .post('/auth/register')
-        .send({
-          businessName: 'BubbleCo Ltd',
-          username: secondAdminUsername,
-          password: 'password123',
-          email: 'adminB@bubbleco.com',
-        });
+      const res = await request(app).post('/auth/register').send({
+        businessName: 'BubbleCo Ltd',
+        username: secondAdminUsername,
+        password: 'password123',
+        email: 'adminB@bubbleco.com',
+      });
 
       expect(res.status).toBe(201);
       expect(res.body.accessToken).toBeDefined();
@@ -227,7 +222,9 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
 
       expect(res.status).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
-      const containsTenantAProduct = res.body.some((p: any) => p.id === productId);
+      const containsTenantAProduct = res.body.some(
+        (p: any) => p.id === productId,
+      );
       expect(containsTenantAProduct).toBe(false);
     });
 
@@ -263,8 +260,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
         .send({ price: 10 });
       expect(patchRes.status).toBe(401);
 
-      const deleteRes = await request(app)
-        .delete(`/api/products/${productId}`);
+      const deleteRes = await request(app).delete(`/api/products/${productId}`);
       expect(deleteRes.status).toBe(401);
     });
 
@@ -276,12 +272,12 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
         .send({
           name: 'Inject Test',
           sku: 'INJ-1',
-          price: 15.00,
+          price: 15.0,
           tenantId: 'some-other-tenant-id',
         });
 
       expect(postRes.status).toBe(400);
-      expect(postRes.body.error).toContain('forbidden for role \'admin\'');
+      expect(postRes.body.error).toContain("forbidden for role 'admin'");
 
       // PATCH attempt to inject id
       const patchRes = await request(app)
@@ -293,7 +289,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
         });
 
       expect(patchRes.status).toBe(400);
-      expect(patchRes.body.error).toContain('forbidden for role \'admin\'');
+      expect(patchRes.body.error).toContain("forbidden for role 'admin'");
     });
 
     it('16. Validation Schema Blocks Invalid Price/Stock (400)', async () => {
@@ -302,7 +298,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Negative pricing test',
-          price: -10.00,
+          price: -10.0,
           stockQuantity: -5,
         });
 
@@ -318,7 +314,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Organic Honey 250g',
-          price: 350.00,
+          price: 350.0,
           description: 'Pure organic honey from Himalayan farms',
           category: 'Pantry',
           unit: '250g',
@@ -329,7 +325,9 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
       expect(res.body.id).toBeDefined();
       expect(res.body.name).toBe('Organic Honey 250g');
       expect(res.body.price).toBe('350.00');
-      expect(res.body.description).toBe('Pure organic honey from Himalayan farms');
+      expect(res.body.description).toBe(
+        'Pure organic honey from Himalayan farms',
+      );
       expect(res.body.category).toBe('Pantry');
       expect(res.body.unit).toBe('250g');
     });
@@ -340,7 +338,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Taxed Product',
-          price: 200.00,
+          price: 200.0,
           taxRate: 18,
         });
 
@@ -354,7 +352,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Minimal Product',
-          price: 25.00,
+          price: 25.0,
         });
 
       expect(res.status).toBe(201);
@@ -370,7 +368,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Negative Price',
-          price: -50.00,
+          price: -50.0,
         });
 
       expect(res.status).toBe(400);
@@ -383,7 +381,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Excessive Tax',
-          price: 100.00,
+          price: 100.0,
           taxRate: 150,
         });
 
@@ -396,7 +394,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Negative Tax',
-          price: 100.00,
+          price: 100.0,
           taxRate: -5,
         });
 
@@ -409,7 +407,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: '',
-          price: 10.00,
+          price: 10.0,
         });
 
       expect(res.status).toBe(400);
@@ -423,7 +421,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Re-categorizable Product',
-          price: 75.00,
+          price: 75.0,
           category: 'Drinks',
         });
       expect(createRes.status).toBe(201);
@@ -447,7 +445,7 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Partially Updatable Product',
-          price: 200.00,
+          price: 200.0,
         });
       expect(createRes.status).toBe(201);
       const updateProductId = createRes.body.id;
@@ -456,11 +454,14 @@ describe('Admin Product Catalog Management E2E Integration Tests', () => {
         .patch(`/api/products/${updateProductId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          description: 'Updated description only — verifies partial PATCH works',
+          description:
+            'Updated description only — verifies partial PATCH works',
         });
 
       expect(res.status).toBe(200);
-      expect(res.body.product.description).toBe('Updated description only — verifies partial PATCH works');
+      expect(res.body.product.description).toBe(
+        'Updated description only — verifies partial PATCH works',
+      );
     });
   });
 });

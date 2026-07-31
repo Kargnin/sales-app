@@ -31,3 +31,9 @@ android/
 ios/
 .playwright-mcp/
 login-screen-working.png
+
+# Husky internals
+.husky/_
+
+# Hermes agent state
+.hermes/

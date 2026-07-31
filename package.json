@@ -15,9 +15,22 @@
     "test:server": "npm run test --workspace=server",
     "test:client": "npm run test --workspace=client",
     "test:shared": "npm run test --workspace=packages/shared",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "db:push": "npm run db:push --workspace=server",
     "db:seed": "npm run db:seed --workspace=server",
-    "lint": "npm run lint --workspaces --if-present"
+    "lint": "npm run lint --workspaces --if-present",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.0.0",
+    "prettier": "^3.6.2"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs}": "prettier --write",
+    "*.{json,md,yml,yaml,css}": "prettier --write"
   },
   "overrides": {
     "lightningcss": "1.30.1"

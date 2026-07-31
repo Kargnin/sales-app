@@ -14,14 +14,16 @@ async function migrate() {
   console.log('Applying migration...');
 
   try {
-    await conn.execute(`ALTER TABLE users ADD COLUMN token_version INT NOT NULL DEFAULT 0`);
+    await conn.execute(
+      `ALTER TABLE users ADD COLUMN token_version INT NOT NULL DEFAULT 0`,
+    );
     console.log('  Added token_version column');
   } catch (e: any) {
-    if (e.code === 'ER_DUP_FIELDNAME') console.log('  token_version already exists');
+    if (e.code === 'ER_DUP_FIELDNAME')
+      console.log('  token_version already exists');
     else throw e;
   }
 
-  // Product metadata columns (image_url, category, description, unit)
   const productColumns = [
     'ALTER TABLE products ADD COLUMN image_url VARCHAR(500)',
     'ALTER TABLE products ADD COLUMN category VARCHAR(100)',
@@ -32,11 +34,36 @@ async function migrate() {
   for (const col of productColumns) {
     try {
       await conn.execute(col);
-      console.log('  Added column:', col.replace('ALTER TABLE products ADD COLUMN ', ''));
+      console.log(
+        '  Added column:',
+        col.replace('ALTER TABLE products ADD COLUMN ', ''),
+      );
     } catch (e: any) {
-      if (e.code === 'ER_DUP_FIELDNAME') console.log('  Already exists:', col.replace('ALTER TABLE products ADD COLUMN ', ''));
+      if (e.code === 'ER_DUP_FIELDNAME')
+        console.log(
+          '  Already exists:',
+          col.replace('ALTER TABLE products ADD COLUMN ', ''),
+        );
       else throw e;
     }
+  }
+
+  try {
+    await conn.execute('ALTER TABLE shops ADD COLUMN image_url VARCHAR(500)');
+    console.log('  Added image_url column to shops');
+  } catch (e: any) {
+    if (e.code === 'ER_DUP_FIELDNAME')
+      console.log('  shops.image_url already exists');
+    else throw e;
+  }
+
+  try {
+    await conn.execute('ALTER TABLE shops ADD COLUMN additional_owners TEXT');
+    console.log('  Added additional_owners column to shops');
+  } catch (e: any) {
+    if (e.code === 'ER_DUP_FIELDNAME')
+      console.log('  shops.additional_owners already exists');
+    else throw e;
   }
 
   const indexes = [
@@ -55,9 +82,16 @@ async function migrate() {
   for (const idx of indexes) {
     try {
       await conn.execute(idx);
-      console.log('  Created:', idx.split(' ON ')[0].replace('CREATE INDEX ', ''));
+      console.log(
+        '  Created:',
+        idx.split(' ON ')[0].replace('CREATE INDEX ', ''),
+      );
     } catch (e: any) {
-      if (e.code === 'ER_DUP_KEYNAME') console.log('  Already exists:', idx.split(' ON ')[0].replace('CREATE INDEX ', ''));
+      if (e.code === 'ER_DUP_KEYNAME')
+        console.log(
+          '  Already exists:',
+          idx.split(' ON ')[0].replace('CREATE INDEX ', ''),
+        );
       else console.error('  Failed:', idx, e.message);
     }
   }

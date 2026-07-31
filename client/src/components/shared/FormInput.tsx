@@ -4,7 +4,7 @@ import { cn } from "../../lib/utils";
 import { Text } from "../ui/text";
 
 interface FormInputProps {
-  label: string;
+  label?: string;
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
@@ -15,6 +15,7 @@ interface FormInputProps {
   /** Max character length. Allows soft truncation without losing typed content. */
   maxLength?: number;
   editable?: boolean;
+  icon?: React.ReactNode;
   /** Called when the field loses focus (for react-hook-form integration). */
   onBlur?: () => void;
 }
@@ -30,6 +31,7 @@ export function FormInput({
   required,
   maxLength,
   editable = true,
+  icon,
   onBlur,
 }: FormInputProps) {
   const [isFocused, setIsFocused] = useState(false);
@@ -37,22 +39,24 @@ export function FormInput({
   return (
     <View className="gap-1.5">
       {/* Label row */}
-      <View className="flex-row items-center gap-0.5">
-        <Text variant="label-medium" color="charcoal">
-          {label}
-        </Text>
-        {required && (
-          <Text variant="caption" color="ember" className="ml-0.5">
-            *
+      {label ? (
+        <View className="flex-row items-center gap-0.5">
+          <Text variant="label-medium" color="charcoal">
+            {label}
           </Text>
-        )}
-      </View>
+          {required && (
+            <Text variant="caption" color="ember" className="ml-0.5">
+              *
+            </Text>
+          )}
+        </View>
+      ) : null}
 
       {/* Input container */}
       <View
         className={cn(
-          "bg-surface border rounded-lg px-3",
-          multiline ? "min-h-[100px] py-3" : "h-11 justify-center",
+          "bg-surface border rounded-lg px-3 flex-row items-center",
+          multiline ? "min-h-[100px] py-3 items-start" : "h-11 justify-center",
           error
             ? "border-ember-orange"
             : isFocused
@@ -60,6 +64,7 @@ export function FormInput({
               : "border-stone-border",
         )}
       >
+        {icon && <View className="mr-2.5 justify-center">{icon}</View>}
         <TextInput
           className={cn(
             "flex-1 font-body text-[15px] text-charcoal leading-[22.05px] p-0",
@@ -70,7 +75,10 @@ export function FormInput({
           value={value}
           onChangeText={onChangeText}
           onFocus={() => setIsFocused(true)}
-          onBlur={() => { setIsFocused(false); onBlur?.(); }}
+          onBlur={() => {
+            setIsFocused(false);
+            onBlur?.();
+          }}
           multiline={multiline}
           textAlignVertical={multiline ? "top" : "center"}
           keyboardType={keyboardType}
