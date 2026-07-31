@@ -28,7 +28,7 @@ jobs:
           node-version: 22
           cache: npm
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Typecheck
         run: npm run typecheck
       - name: Test
@@ -50,7 +50,7 @@ jobs:
           node-version: 22
           cache: npm
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Typecheck
         run: npm run typecheck
       - name: Unit tests
@@ -93,7 +93,7 @@ jobs:
           node-version: 22
           cache: npm
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Typecheck
         run: npm run typecheck
       - name: Build
