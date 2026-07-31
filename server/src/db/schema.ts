@@ -8,7 +8,27 @@ import {
   boolean,
   text,
   date,
+  customType,
 } from 'drizzle-orm/mysql-core';
+
+export type ShopOwner = { name?: string; phone?: string };
+
+// Stores a JSON array in a TEXT column, transparently stringifying on write
+// and parsing on read so the API contract stays `ShopOwner[] | null`.
+const jsonText = customType<{
+  data: ShopOwner[] | null;
+  driverData: string | null;
+}>({
+  dataType() {
+    return 'text';
+  },
+  toDriver(value) {
+    return value === null ? null : JSON.stringify(value);
+  },
+  fromDriver(value) {
+    return value === null ? null : JSON.parse(value);
+  },
+});
 
 // ─── Tenants ───────────────────────────────────────────
 export const tenants = mysqlTable('tenants', {
@@ -48,7 +68,7 @@ export const shops = mysqlTable('shops', {
   phone: varchar('phone', { length: 20 }).notNull(),
   address: text('address'),
   imageUrl: varchar('image_url', { length: 500 }),
-  additionalOwners: text('additional_owners'),
+  additionalOwners: jsonText('additional_owners'),
   latitude: decimal('latitude', { precision: 10, scale: 8 }),
   longitude: decimal('longitude', { precision: 11, scale: 8 }),
   status: mysqlEnum('status', ['approved', 'pending_approval', 'rejected'])

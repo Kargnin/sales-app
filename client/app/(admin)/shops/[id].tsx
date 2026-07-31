@@ -150,14 +150,8 @@ function EditShopForm({
   const [isSaving, setIsSaving] = useState(false);
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
 
-  let parsedCoOwners: Array<{ name: string; phone: string }> = [];
-  try {
-    if (shop.additionalOwners) {
-      parsedCoOwners = JSON.parse(shop.additionalOwners);
-    }
-  } catch {
-    parsedCoOwners = [];
-  }
+  // Server returns additionalOwners as a parsed array (JSON column)
+  const initialCoOwners = shop.additionalOwners ?? [];
 
   const defaultValues = {
     name: shop.name,
@@ -165,7 +159,7 @@ function EditShopForm({
     phone: shop.phone,
     address: shop.address ?? "",
     imageUrl: shop.imageUrl ?? null,
-    additionalOwners: parsedCoOwners,
+    additionalOwners: initialCoOwners,
     latitude: shop.latitude ? Number(shop.latitude) : 19.076,
     longitude: shop.longitude ? Number(shop.longitude) : 72.8777,
   };
@@ -584,14 +578,7 @@ export default function ShopDetailScreen() {
   if (isLoading) return <LoadingSkeleton />;
   if (isError || !shop) return <ErrorState onRetry={refetch} />;
 
-  let parsedCoOwners: Array<{ name: string; phone: string }> = [];
-  try {
-    if (shop.additionalOwners) {
-      parsedCoOwners = JSON.parse(shop.additionalOwners);
-    }
-  } catch {
-    parsedCoOwners = [];
-  }
+  const coOwners = shop.additionalOwners ?? [];
 
   const shopLat = shop.latitude ? Number(shop.latitude) : 19.076;
   const shopLng = shop.longitude ? Number(shop.longitude) : 72.8777;
@@ -753,17 +740,17 @@ export default function ShopDetailScreen() {
                 </View>
 
                 {/* Additional Co-Owners Pill Tags */}
-                {parsedCoOwners.length > 0 && (
+                {coOwners.length > 0 && (
                   <View className="pt-2 border-t border-stone-border/40 gap-1.5">
                     <Text
                       variant="caption"
                       color="ash"
                       className="text-xs font-semibold"
                     >
-                      Co-Owners ({parsedCoOwners.length}):
+                      Co-Owners ({coOwners.length}):
                     </Text>
                     <View className="flex-row flex-wrap gap-2">
-                      {parsedCoOwners.map((owner, idx) => (
+                      {coOwners.map((owner, idx) => (
                         <View
                           key={idx}
                           className="bg-surface-recessed px-3 py-1.5 rounded-lg border border-stone-border flex-row items-center gap-1.5"

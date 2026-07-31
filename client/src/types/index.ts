@@ -11,6 +11,11 @@ export interface User {
   createdAt: string;
 }
 
+export interface ShopOwner {
+  name?: string;
+  phone?: string;
+}
+
 export interface Shop {
   id: string;
   tenantId: string;
@@ -19,7 +24,7 @@ export interface Shop {
   phone: string;
   address: string | null;
   imageUrl?: string | null;
-  additionalOwners?: string | null;
+  additionalOwners?: ShopOwner[] | null;
   latitude: string | null;
   longitude: string | null;
   status: "approved" | "pending_approval" | "rejected";

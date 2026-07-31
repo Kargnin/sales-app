@@ -114,9 +114,9 @@ describeIfDb('Shops Detail, Edit & Delete Integration Tests', () => {
       expect(res.body.name).toBe('Apex Central Store');
       expect(res.body.ownerName).toBe('John Apex');
       expect(res.body.phone).toBe('9876543210');
-      expect(res.body.additionalOwners).toBe(
-        JSON.stringify([{ name: 'Jane Apex', phone: '9876543211' }]),
-      );
+      expect(res.body.additionalOwners).toEqual([
+        { name: 'Jane Apex', phone: '9876543211' },
+      ]);
     });
 
     it('returns 404 when shop does not exist', async () => {
@@ -156,12 +156,10 @@ describeIfDb('Shops Detail, Edit & Delete Integration Tests', () => {
       expect(res.status).toBe(200);
       expect(res.body.shop.name).toBe('Apex Super Center');
       expect(res.body.shop.ownerName).toBe('Johnathan Apex');
-      expect(res.body.shop.additionalOwners).toBe(
-        JSON.stringify([
-          { name: 'Co-Owner 1', phone: '1112223333' },
-          { name: 'Co-Owner 2', phone: '4445556666' },
-        ]),
-      );
+      expect(res.body.shop.additionalOwners).toEqual([
+        { name: 'Co-Owner 1', phone: '1112223333' },
+        { name: 'Co-Owner 2', phone: '4445556666' },
+      ]);
     });
 
     it('blocks Salesman from editing shop details (403 Forbidden)', async () => {

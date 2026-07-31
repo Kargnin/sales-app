@@ -98,9 +98,7 @@ router.post(
         phone,
         address: address || null,
         imageUrl: imageUrl || null,
-        additionalOwners: additionalOwners
-          ? JSON.stringify(additionalOwners)
-          : null,
+        additionalOwners: additionalOwners || null,
         latitude: latitude !== undefined ? String(latitude) : null,
         longitude: longitude !== undefined ? String(longitude) : null,
         status: defaultStatus,
@@ -166,70 +164,6 @@ router.patch(
       res.json({ message: 'Shop approved successfully', id });
     } catch (error) {
       console.error('Error approving shop:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  },
-);
-
-// ─── Edit Shop Details (Admin Only) ───────────────────────────────────
-router.patch(
-  '/:id',
-  authorize('admin'),
-  fieldGuard({ admin: { reject: ['id', 'tenantId'] } }),
-  validate(updateShopSchema),
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const id = req.params.id as string;
-      const tenantId = req.user!.tenantId;
-
-      const existingShop = await db.query.shops.findFirst({
-        where: and(eq(shops.id, id), eq(shops.tenantId, tenantId)),
-      });
-
-      if (!existingShop) {
-        res.status(404).json({ error: 'Shop not found' });
-        return;
-      }
-
-      const {
-        name,
-        ownerName,
-        phone,
-        address,
-        imageUrl,
-        additionalOwners,
-        latitude,
-        longitude,
-        status,
-      } = req.body;
-
-      await db
-        .update(shops)
-        .set({
-          name: name !== undefined ? name : undefined,
-          ownerName: ownerName !== undefined ? ownerName : undefined,
-          phone: phone !== undefined ? phone : undefined,
-          address: address !== undefined ? address : undefined,
-          imageUrl: imageUrl !== undefined ? imageUrl : undefined,
-          additionalOwners:
-            additionalOwners !== undefined
-              ? JSON.stringify(additionalOwners)
-              : undefined,
-          latitude: latitude !== undefined ? String(latitude) : undefined,
-          longitude: longitude !== undefined ? String(longitude) : undefined,
-          status: status !== undefined ? status : undefined,
-        })
-        .where(eq(shops.id, id));
-
-      const updatedShop = await db.query.shops.findFirst({
-        where: eq(shops.id, id),
-      });
-      res.json({
-        message: 'Shop details updated successfully',
-        shop: updatedShop,
-      });
-    } catch (error) {
-      console.error('Error editing shop:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   },
@@ -329,6 +263,68 @@ router.patch(
       });
     } catch (error) {
       console.error('Error rejecting shop:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+// ─── Edit Shop Details (Admin Only) ───────────────────────────────────
+router.patch(
+  '/:id',
+  authorize('admin'),
+  fieldGuard({ admin: { reject: ['id', 'tenantId'] } }),
+  validate(updateShopSchema),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const tenantId = req.user!.tenantId;
+
+      const existingShop = await db.query.shops.findFirst({
+        where: and(eq(shops.id, id), eq(shops.tenantId, tenantId)),
+      });
+
+      if (!existingShop) {
+        res.status(404).json({ error: 'Shop not found' });
+        return;
+      }
+
+      const {
+        name,
+        ownerName,
+        phone,
+        address,
+        imageUrl,
+        additionalOwners,
+        latitude,
+        longitude,
+        status,
+      } = req.body;
+
+      await db
+        .update(shops)
+        .set({
+          name: name !== undefined ? name : undefined,
+          ownerName: ownerName !== undefined ? ownerName : undefined,
+          phone: phone !== undefined ? phone : undefined,
+          address: address !== undefined ? address : undefined,
+          imageUrl: imageUrl !== undefined ? imageUrl : undefined,
+          additionalOwners:
+            additionalOwners !== undefined ? additionalOwners : undefined,
+          latitude: latitude !== undefined ? String(latitude) : undefined,
+          longitude: longitude !== undefined ? String(longitude) : undefined,
+          status: status !== undefined ? status : undefined,
+        })
+        .where(eq(shops.id, id));
+
+      const updatedShop = await db.query.shops.findFirst({
+        where: eq(shops.id, id),
+      });
+      res.json({
+        message: 'Shop details updated successfully',
+        shop: updatedShop,
+      });
+    } catch (error) {
+      console.error('Error editing shop:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   },

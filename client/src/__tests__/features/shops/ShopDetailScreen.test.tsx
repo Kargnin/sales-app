@@ -12,9 +12,7 @@ const mockShopData: Shop = {
   phone: "9876543210",
   address: "123 Commercial St, Mumbai, PIN: 400001",
   imageUrl: "https://example.com/store.jpg",
-  additionalOwners: JSON.stringify([
-    { name: "Bob Walker", phone: "9876543211" },
-  ]),
+  additionalOwners: [{ name: "Bob Walker", phone: "9876543211" }],
   latitude: "19.0760",
   longitude: "72.8777",
   status: "approved",
