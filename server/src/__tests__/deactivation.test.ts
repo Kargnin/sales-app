@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import { describeIfDb } from './helpers/dbAvailable.js';
 import request from 'supertest';
 import { app } from '../index.js';
 import { v4 as uuidv4 } from 'uuid';
 
-describe('Admin Self-Deactivation & Session Check Regression Tests', () => {
+describeIfDb('Admin Self-Deactivation & Session Check Regression Tests', () => {
   let adminToken: string;
   let adminUser: any;
   let salesmanToken: string;
@@ -14,14 +15,12 @@ describe('Admin Self-Deactivation & Session Check Regression Tests', () => {
   const salesmanUsername = `sales_${uuidv4().substring(0, 8)}`;
 
   it('1. Register Admin Business & Retrieve tenantName', async () => {
-    const res = await request(app)
-      .post('/auth/register')
-      .send({
-        businessName: 'ApexSoap Inc',
-        username: adminUsername,
-        password: 'password123',
-        email: 'admin_apex@soap.com',
-      });
+    const res = await request(app).post('/auth/register').send({
+      businessName: 'ApexSoap Inc',
+      username: adminUsername,
+      password: 'password123',
+      email: 'admin_apex@soap.com',
+    });
 
     expect(res.status).toBe(201);
     expect(res.body.accessToken).toBeDefined();
@@ -45,12 +44,10 @@ describe('Admin Self-Deactivation & Session Check Regression Tests', () => {
     expect(res.status).toBe(201);
     salesmanUser = res.body;
 
-    const loginRes = await request(app)
-      .post('/auth/login')
-      .send({
-        username: salesmanUsername,
-        password: 'password123',
-      });
+    const loginRes = await request(app).post('/auth/login').send({
+      username: salesmanUsername,
+      password: 'password123',
+    });
 
     expect(loginRes.status).toBe(200);
     expect(loginRes.body.accessToken).toBeDefined();
@@ -69,7 +66,9 @@ describe('Admin Self-Deactivation & Session Check Regression Tests', () => {
       .send({ status: 'inactive' });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toBe('Administrators cannot deactivate their own accounts');
+    expect(res.body.error).toBe(
+      'Administrators cannot deactivate their own accounts',
+    );
   });
 
   it('4. Deactivate Salesman & Block Refresh Token Renewals', async () => {

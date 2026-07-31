@@ -19,7 +19,9 @@ try {
   // Fallback: if expect is a global, extend it directly
   if (typeof (globalThis as any).expect?.extend === "function") {
     try {
-      const matchers = require("@testing-library/jest-native").default || require("@testing-library/jest-native");
+      const matchers =
+        require("@testing-library/jest-native").default ||
+        require("@testing-library/jest-native");
       (globalThis as any).expect.extend(matchers);
     } catch {
       // If neither approach works, tests can still run without custom matchers
@@ -185,8 +187,29 @@ jest.mock("@gorhom/bottom-sheet", () => {
     );
   });
 
+  // BottomSheet (non-modal) mock — always visible, renders children in a View
+  const BottomSheet = React.forwardRef((props: any, ref: any) => {
+    React.useImperativeHandle(ref, () => ({
+      snapToIndex: () => {},
+      snapToPosition: () => {},
+      expand: () => {},
+      close: () => {},
+      collapse: () => {},
+      forceClose: () => {},
+    }));
+    return React.createElement(
+      View,
+      { testID: props.testID || "bottom-sheet" },
+      props.children,
+    );
+  });
+
   return {
+    __esModule: true,
+    default: BottomSheet,
+    BottomSheet,
     BottomSheetModal,
+    BottomSheetModalProvider: ({ children }: any) => children,
     BottomSheetBackdrop: (props: any) => React.createElement(View, null),
     BottomSheetFlatList: FlatList,
     BottomSheetScrollView: require("react-native").ScrollView,
@@ -200,8 +223,7 @@ jest.mock("@expo/vector-icons", () => {
   const React = require("react");
   const { Text } = require("react-native");
   const createIconSet =
-    () =>
-    (props: { name: string; size?: number; color?: string }) =>
+    () => (props: { name: string; size?: number; color?: string }) =>
       React.createElement(Text, { testID: `icon-${props.name}` }, props.name);
   return {
     Ionicons: createIconSet(),
@@ -279,6 +301,73 @@ jest.mock("expo-router", () => {
     },
   };
 });
+
+// react-native-maps
+jest.mock("react-native-maps", () => {
+  const React = require("react");
+  const { View } = require("react-native");
+
+  const MockMarker = React.forwardRef((props: any, ref: any) => {
+    React.useImperativeHandle(ref, () => ({
+      showCallout: () => {},
+      hideCallout: () => {},
+      redrawCallout: () => {},
+      animateMarkerToCoordinate: () => {},
+      setCoordinates: () => {},
+    }));
+    return React.createElement(
+      View,
+      { ...props, testID: props.testID || `marker-${props.key}` },
+      props.children,
+    );
+  });
+
+  const MockCallout = React.forwardRef((props: any, ref: any) =>
+    React.createElement(View, props, props.children),
+  );
+
+  const MockMapView = React.forwardRef((props: any, ref: any) => {
+    React.useImperativeHandle(ref, () => ({
+      animateToRegion: jest.fn(),
+      animateCamera: jest.fn(),
+      fitToElements: jest.fn(),
+      fitToSuppliedMarkers: jest.fn(),
+      fitToCoordinates: jest.fn(),
+      setMapBoundaries: jest.fn(),
+      takeSnapshot: jest.fn(),
+      pointForCoordinate: jest.fn(),
+      coordinateForPoint: jest.fn(),
+      getMarkersFrames: jest.fn(),
+      getMapBounds: jest.fn(),
+    }));
+    return React.createElement(
+      View,
+      { ...props, testID: props.testID || "map-view" },
+      props.children,
+    );
+  });
+
+  MockMapView.displayName = "MockMapView";
+  MockMarker.displayName = "MockMarker";
+  MockCallout.displayName = "MockCallout";
+
+  return {
+    __esModule: true,
+    default: MockMapView,
+    Marker: MockMarker,
+    Callout: MockCallout,
+    PROVIDER_GOOGLE: "google",
+    PROVIDER_DEFAULT: undefined,
+  };
+});
+
+// expo-location — used by ShopMapCanvas "Near Me" button
+jest.mock("expo-location", () => ({
+  getForegroundPermissionsAsync: jest.fn(),
+  requestForegroundPermissionsAsync: jest.fn(),
+  getCurrentPositionAsync: jest.fn(),
+  Accuracy: { Balanced: 3, High: 3, Low: 1 },
+}));
 
 // ── Silence noisy native module warnings ────────────────────────────────────
 

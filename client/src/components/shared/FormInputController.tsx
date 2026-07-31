@@ -1,18 +1,24 @@
 import { Controller } from "react-hook-form";
-import type { Control, FieldValues, Path, RegisterOptions } from "react-hook-form";
+import type {
+  Control,
+  FieldValues,
+  Path,
+  RegisterOptions,
+} from "react-hook-form";
 import type { KeyboardTypeOptions } from "react-native";
 import { FormInput } from "./FormInput";
 
 interface FormInputControllerProps<T extends FieldValues> {
   name: Path<T>;
   control: Control<T>;
-  label: string;
+  label?: string;
   placeholder?: string;
   multiline?: boolean;
   keyboardType?: KeyboardTypeOptions;
   required?: boolean;
   maxLength?: number;
   editable?: boolean;
+  icon?: React.ReactNode;
   rules?: Omit<
     RegisterOptions<T, Path<T>>,
     "valueAsNumber" | "valueAsDate" | "setValueAs" | "disabled"
@@ -33,6 +39,7 @@ export function FormInputController<T extends FieldValues>({
   required,
   maxLength,
   editable,
+  icon,
   rules,
 }: FormInputControllerProps<T>) {
   return (
@@ -40,7 +47,10 @@ export function FormInputController<T extends FieldValues>({
       name={name}
       control={control}
       rules={rules}
-      render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+      render={({
+        field: { onChange, onBlur, value },
+        fieldState: { error },
+      }) => (
         <FormInput
           label={label}
           value={value ?? ""}
@@ -52,6 +62,7 @@ export function FormInputController<T extends FieldValues>({
           required={required}
           maxLength={maxLength}
           editable={editable}
+          icon={icon}
           error={error?.message}
         />
       )}

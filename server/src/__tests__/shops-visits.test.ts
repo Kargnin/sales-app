@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import { describeIfDb } from './helpers/dbAvailable.js';
 import request from 'supertest';
 import { app } from '../index.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -6,7 +7,7 @@ import { db } from '../db/connection.js';
 import { orders, products, shops } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 
-describe('Shops & GPS Visits Integration', () => {
+describeIfDb('Shops & GPS Visits Integration', () => {
   let adminToken: string;
   let salesmanToken: string;
   let adminTenantId: string;
@@ -19,15 +20,13 @@ describe('Shops & GPS Visits Integration', () => {
 
   beforeAll(async () => {
     // 1. Register a tenant with an admin
-    const registerRes = await request(app)
-      .post('/auth/register')
-      .send({
-        businessName: 'Haversine Logistics',
-        username: adminUsername,
-        password: 'password123',
-        email: 'admin_test@haversine.com',
-        phone: '9876543210',
-      });
+    const registerRes = await request(app).post('/auth/register').send({
+      businessName: 'Haversine Logistics',
+      username: adminUsername,
+      password: 'password123',
+      email: 'admin_test@haversine.com',
+      phone: '9876543210',
+    });
 
     adminToken = registerRes.body.accessToken;
     adminTenantId = registerRes.body.user.tenantId;
@@ -43,12 +42,10 @@ describe('Shops & GPS Visits Integration', () => {
       });
 
     // 3. Login as salesman to get token
-    const loginRes = await request(app)
-      .post('/auth/login')
-      .send({
-        username: salesmanUsername,
-        password: 'password12345',
-      });
+    const loginRes = await request(app).post('/auth/login').send({
+      username: salesmanUsername,
+      password: 'password12345',
+    });
 
     salesmanToken = loginRes.body.accessToken;
   });
@@ -63,12 +60,14 @@ describe('Shops & GPS Visits Integration', () => {
           ownerName: 'Alice Smith',
           phone: '9999988888',
           address: '123 Main Street',
-          latitude: 19.0760,
+          imageUrl: 'https://example.com/shop-photo.jpg',
+          latitude: 19.076,
           longitude: 72.8777,
         });
 
       expect(res.status).toBe(201);
       expect(res.body.status).toBe('approved');
+      expect(res.body.imageUrl).toBe('https://example.com/shop-photo.jpg');
       expect(res.body.id).toBeDefined();
       approvedShopId = res.body.id;
     });
@@ -82,8 +81,8 @@ describe('Shops & GPS Visits Integration', () => {
           ownerName: 'Bob Jones',
           phone: '8888877777',
           address: '456 Side Street',
-          latitude: 19.0800,
-          longitude: 72.8800,
+          latitude: 19.08,
+          longitude: 72.88,
         });
 
       expect(res.status).toBe(201);
@@ -120,7 +119,9 @@ describe('Shops & GPS Visits Integration', () => {
         .get('/api/shops')
         .set('Authorization', `Bearer ${adminToken}`);
 
-      const approvedShop = listRes.body.find((s: any) => s.id === pendingShopId);
+      const approvedShop = listRes.body.find(
+        (s: any) => s.id === pendingShopId,
+      );
       expect(approvedShop.status).toBe('approved');
     });
 
@@ -136,7 +137,9 @@ describe('Shops & GPS Visits Integration', () => {
         .get('/api/shops')
         .set('Authorization', `Bearer ${adminToken}`);
 
-      const rejectedShop = listRes.body.find((s: any) => s.id === pendingShopId);
+      const rejectedShop = listRes.body.find(
+        (s: any) => s.id === pendingShopId,
+      );
       expect(rejectedShop.status).toBe('rejected');
     });
   });
@@ -167,8 +170,8 @@ describe('Shops & GPS Visits Integration', () => {
         .set('Authorization', `Bearer ${salesmanToken}`)
         .send({
           shopId: approvedShopId,
-          latitude: 19.0800,
-          longitude: 72.8900,
+          latitude: 19.08,
+          longitude: 72.89,
           notes: 'Spoofed check-in from afar',
         });
 
@@ -213,7 +216,7 @@ describe('Shops & GPS Visits Integration', () => {
           ownerName: 'Charlie Root',
           phone: '7777766666',
           address: '789 Main Rd',
-          latitude: 19.0760,
+          latitude: 19.076,
           longitude: 72.8777,
         });
       pendingShopId2 = shopRes.body.id;
@@ -227,7 +230,7 @@ describe('Shops & GPS Visits Integration', () => {
           ownerName: 'Rejected Owner',
           phone: '5555544444',
           address: '444 Main Rd',
-          latitude: 19.0760,
+          latitude: 19.076,
           longitude: 72.8777,
         });
       rejectedShopId = rejectShopRes.body.id;
@@ -259,7 +262,9 @@ describe('Shops & GPS Visits Integration', () => {
           notes: 'Attempt pending check-in',
         });
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain('Cannot check in to a shop that is not approved');
+      expect(res.body.error).toContain(
+        'Cannot check in to a shop that is not approved',
+      );
     });
 
     it('prevents check-in to a rejected shop', async () => {
@@ -273,7 +278,9 @@ describe('Shops & GPS Visits Integration', () => {
           notes: 'Attempt rejected check-in',
         });
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain('Cannot check in to a shop that is not approved');
+      expect(res.body.error).toContain(
+        'Cannot check in to a shop that is not approved',
+      );
     });
 
     it('allows placing an order for a pending_approval shop', async () => {
@@ -282,7 +289,7 @@ describe('Shops & GPS Visits Integration', () => {
         .set('Authorization', `Bearer ${salesmanToken}`)
         .send({
           shopId: pendingShopId2,
-          items: [{ productId: testProductId, quantity: 5, unitPrice: 15.00 }],
+          items: [{ productId: testProductId, quantity: 5, unitPrice: 15.0 }],
         });
       expect(res.status).toBe(201);
       expect(res.body.status).toBe('pending_approval');
@@ -294,15 +301,20 @@ describe('Shops & GPS Visits Integration', () => {
         .set('Authorization', `Bearer ${salesmanToken}`)
         .send({
           shopId: rejectedShopId,
-          items: [{ productId: testProductId, quantity: 5, unitPrice: 15.00 }],
+          items: [{ productId: testProductId, quantity: 5, unitPrice: 15.0 }],
         });
       expect(res.status).toBe(400);
-      expect(res.body.error).toContain('Cannot place order for a rejected shop');
+      expect(res.body.error).toContain(
+        'Cannot place order for a rejected shop',
+      );
     });
 
     it('automatically cancels pending/confirmed orders on shop rejection', async () => {
       // Ensure we have a pending order for pendingShopId2
-      const orderResBefore = await db.select().from(orders).where(eq(orders.shopId, pendingShopId2));
+      const orderResBefore = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.shopId, pendingShopId2));
       expect(orderResBefore.length).toBeGreaterThan(0);
       expect(orderResBefore[0].status).toBe('pending_approval');
 
@@ -314,7 +326,10 @@ describe('Shops & GPS Visits Integration', () => {
       expect(rejectRes.body.cancelledOrdersCount).toBe(1);
 
       // Verify the order is cancelled
-      const orderResAfter = await db.select().from(orders).where(eq(orders.shopId, pendingShopId2));
+      const orderResAfter = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.shopId, pendingShopId2));
       expect(orderResAfter[0].status).toBe('cancelled');
     });
 
@@ -328,7 +343,7 @@ describe('Shops & GPS Visits Integration', () => {
           ownerName: 'Deliver Guy',
           phone: '6666655555',
           address: '555 Road',
-          latitude: 19.0760,
+          latitude: 19.076,
           longitude: 72.8777,
         });
       const newShopId = shopRes.body.id;
@@ -339,12 +354,15 @@ describe('Shops & GPS Visits Integration', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           shopId: newShopId,
-          items: [{ productId: testProductId, quantity: 2, unitPrice: 15.00 }],
+          items: [{ productId: testProductId, quantity: 2, unitPrice: 15.0 }],
         });
       const orderId = orderRes.body.id;
 
       // 3. Manually update order to 'delivered' in DB to simulate dispatch/delivery outside cancellation window
-      await db.update(orders).set({ status: 'delivered' }).where(eq(orders.id, orderId));
+      await db
+        .update(orders)
+        .set({ status: 'delivered' })
+        .where(eq(orders.id, orderId));
 
       // 4. Try to reject the shop
       const rejectRes = await request(app)

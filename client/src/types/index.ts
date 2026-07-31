@@ -11,6 +11,11 @@ export interface User {
   createdAt: string;
 }
 
+export interface ShopOwner {
+  name?: string;
+  phone?: string;
+}
+
 export interface Shop {
   id: string;
   tenantId: string;
@@ -18,6 +23,8 @@ export interface Shop {
   ownerName: string | null;
   phone: string;
   address: string | null;
+  imageUrl?: string | null;
+  additionalOwners?: ShopOwner[] | null;
   latitude: string | null;
   longitude: string | null;
   status: "approved" | "pending_approval" | "rejected";
@@ -65,7 +72,8 @@ export interface Order {
   salesmanId: string | null;
   salesmanName?: string;
   orderSource: "salesman" | "whatsapp" | "meesho" | "admin_self";
-  status: "pending_approval" | "confirmed" | "cancelled" | "dispatched" | "delivered";
+  status:
+    "pending_approval" | "confirmed" | "cancelled" | "dispatched" | "delivered";
   paymentStatus: "unpaid" | "partially_paid" | "paid";
   cancellationToken?: string | null;
   totalAmount: string;

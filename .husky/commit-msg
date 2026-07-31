@@ -1,0 +1,16 @@
+#!/bin/sh
+# Enforces Conventional Commits: type(scope): subject
+# e.g. feat(shops): add shop onboarding wizard
+message="$(cat "$1")"
+
+# Allow merge / revert / fixup messages
+case "$message" in
+  Merge*|Revert*|fixup!*|squash!*) exit 0 ;;
+esac
+
+if ! echo "$message" | grep -qE '^(feat|fix|refactor|docs|test|ci|chore|perf|build|style|revert)(\([a-zA-Z0-9_.-]+\))?!?: .+'; then
+  echo "❌ Commit rejected: message must follow Conventional Commits format"
+  echo "   e.g. feat(shops): add shop onboarding wizard"
+  echo "   types: feat fix refactor docs test ci chore perf build style revert"
+  exit 1
+fi

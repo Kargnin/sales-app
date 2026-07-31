@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
+import { describeIfDb } from './helpers/dbAvailable.js';
 import request from 'supertest';
 import { app } from '../index.js';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db/connection.js';
 import { shops, visits, orders } from '../db/schema.js';
 
-describe('Dashboard Metrics Integration Tests', () => {
+describeIfDb('Dashboard Metrics Integration Tests', () => {
   let adminToken: string;
   let adminUser: any;
   let salesmanToken: string;
@@ -16,14 +17,12 @@ describe('Dashboard Metrics Integration Tests', () => {
   const salesmanUsername = `sales_dash_${uuidv4().substring(0, 8)}`;
 
   it('1. Setup - Business Registration', async () => {
-    const res = await request(app)
-      .post('/auth/register')
-      .send({
-        businessName: 'Metrics Test Shop',
-        username: adminUsername,
-        password: 'password123',
-        email: 'admin_dash@test.com',
-      });
+    const res = await request(app).post('/auth/register').send({
+      businessName: 'Metrics Test Shop',
+      username: adminUsername,
+      password: 'password123',
+      email: 'admin_dash@test.com',
+    });
 
     expect(res.status).toBe(201);
     adminToken = res.body.accessToken;
@@ -45,12 +44,10 @@ describe('Dashboard Metrics Integration Tests', () => {
     salesmanUser = userRes.body;
 
     // Login as salesman
-    const loginRes = await request(app)
-      .post('/auth/login')
-      .send({
-        username: salesmanUsername,
-        password: 'password123',
-      });
+    const loginRes = await request(app).post('/auth/login').send({
+      username: salesmanUsername,
+      password: 'password123',
+    });
     salesmanToken = loginRes.body.accessToken;
 
     // Create a shop in the database for visits/orders

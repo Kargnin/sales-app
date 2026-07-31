@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   BottomSheetModal,
   BottomSheetBackdrop,
+  BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { ReduceMotion, useReducedMotion } from "react-native-reanimated";
 import { Text } from "../ui/text";
@@ -37,7 +38,11 @@ interface FilterToolbarProps<T> {
 
 function SectionLabel({ children }: { children: string }) {
   return (
-    <Text variant="label-medium" color="charcoal" className="mb-2">
+    <Text
+      variant="label-medium"
+      color="charcoal"
+      className="mb-2 font-semibold"
+    >
       {children}
     </Text>
   );
@@ -59,16 +64,34 @@ export function FilterToolbar<T extends Record<string, any>>({
 
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<string>(
-    defaultFilterKey ?? (filterOptions ? "__all" : "")
+    defaultFilterKey ?? (filterOptions ? "__all" : ""),
   );
   const [activeSort, setActiveSort] = useState<string>(
-    defaultSortKey ?? sortOptions?.[0]?.key ?? ""
+    defaultSortKey ?? sortOptions?.[0]?.key ?? "",
   );
 
-  const hasActiveFilter = activeFilter !== "__all";
-  const hasNonDefaultSort = activeSort !== (defaultSortKey ?? sortOptions?.[0]?.key);
-  const hasOptions = (filterOptions && filterOptions.length > 0) || (sortOptions && sortOptions.length > 1);
+  const snapPoints = useMemo(() => ["50%"], []);
+
+  const defaultSort = defaultSortKey ?? sortOptions?.[0]?.key ?? "";
+  const hasActiveFilter = activeFilter !== "__all" && activeFilter !== "";
+  const hasNonDefaultSort = activeSort !== defaultSort && activeSort !== "";
+  const hasOptions =
+    (filterOptions && filterOptions.length > 0) ||
+    (sortOptions && sortOptions.length > 1);
   const filterBadge = hasActiveFilter || hasNonDefaultSort;
+
+  // Toggle or deselect filter option (tapping an active filter shifts it back to "__all")
+  const handleFilterPress = useCallback((key: string) => {
+    setActiveFilter((prev) => (prev === key ? "__all" : key));
+  }, []);
+
+  // Toggle or deselect sort option (tapping an active sort option deselects it)
+  const handleSortPress = useCallback(
+    (key: string) => {
+      setActiveSort((prev) => (prev === key ? defaultSort : key));
+    },
+    [defaultSort],
+  );
 
   const result = useMemo(() => {
     let filtered = data;
@@ -79,25 +102,38 @@ export function FilterToolbar<T extends Record<string, any>>({
         searchKeys.some((key) => {
           const val = item[key];
           return typeof val === "string" && val.toLowerCase().includes(q);
-        })
+        }),
       );
     }
 
-    if (filterOptions && activeFilter !== "__all") {
+    if (filterOptions && activeFilter !== "__all" && activeFilter !== "") {
       const filterFn = filterOptions.find((f) => f.key === activeFilter);
       if (filterFn) filtered = filtered.filter(filterFn.predicate);
     }
 
-    const sortFn = sortOptions?.find((s) => s.key === activeSort);
-    if (sortFn) {
-      filtered = [...filtered].sort(sortFn.compare);
+    if (activeSort) {
+      const sortFn = sortOptions?.find((s) => s.key === activeSort);
+      if (sortFn) {
+        filtered = [...filtered].sort(sortFn.compare);
+      }
     }
 
     return filtered;
-  }, [data, search, activeFilter, activeSort, searchKeys, filterOptions, sortOptions]);
+  }, [
+    data,
+    search,
+    activeFilter,
+    activeSort,
+    searchKeys,
+    filterOptions,
+    sortOptions,
+  ]);
 
   const allFilterPills = filterOptions
-    ? [{ key: "__all", label: "All" }, ...filterOptions.map(({ key, label }) => ({ key, label }))]
+    ? [
+        { key: "__all", label: "All" },
+        ...filterOptions.map(({ key, label }) => ({ key, label })),
+      ]
     : [];
 
   const openSheet = useCallback(() => {
@@ -112,7 +148,7 @@ export function FilterToolbar<T extends Record<string, any>>({
     <>
       {/* Search Bar */}
       <View className="px-4 pt-4 pb-3">
-        <View className="flex-row items-center bg-surface border border-stone-border rounded-10 px-4 py-3 gap-3">
+        <View className="flex-row items-center bg-surface border border-stone-border rounded-10 px-4 py-3 gap-3 shadow-sm">
           <Ionicons name="search-outline" size={18} color="#848281" />
           <TextInput
             placeholder={searchPlaceholder}
@@ -135,31 +171,44 @@ export function FilterToolbar<T extends Record<string, any>>({
           {hasOptions && (
             <TouchableOpacity
               onPress={openSheet}
-              className="relative"
+              testID="filter-funnel-button"
+              className="relative p-1"
               accessibilityLabel="Filter and sort options"
               accessibilityRole="button"
             >
               <Ionicons
                 name="funnel-outline"
-                size={18}
+                size={20}
                 color={filterBadge ? "#ff3e00" : "#848281"}
               />
               {filterBadge && (
-                <View className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-ember-orange" />
+                <View
+                  testID="filter-badge-dot"
+                  className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-ember-orange border border-surface"
+                />
               )}
             </TouchableOpacity>
           )}
         </View>
       </View>
 
-      {/* Filter / Sort Bottom Sheet */}
+      {/* Filter / Sort Bottom Sheet Modal */}
       <BottomSheetModal
         ref={sheetRef}
-        enableDynamicSizing
+        snapPoints={snapPoints}
         enablePanDownToClose
         bottomInset={insets.bottom + 16}
-        handleIndicatorStyle={{ width: 40, height: 4, borderRadius: 2, backgroundColor: "#d1cfce" }}
-        backgroundStyle={{ backgroundColor: "#faf9f7", borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+        handleIndicatorStyle={{
+          width: 40,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: "#d1cfce",
+        }}
+        backgroundStyle={{
+          backgroundColor: "#faf9f7",
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+        }}
         backdropComponent={(props) => (
           <BottomSheetBackdrop
             {...props}
@@ -172,19 +221,19 @@ export function FilterToolbar<T extends Record<string, any>>({
           reducedMotion ? ReduceMotion.Always : ReduceMotion.Never
         }
       >
-        <View className="px-5 pb-4">
+        <BottomSheetView className="px-5 pb-6">
           {/* Filter Section */}
           {allFilterPills.length > 1 && (
             <View className="mb-5">
-              <SectionLabel>Filter by</SectionLabel>
+              <SectionLabel>Filter by Status</SectionLabel>
               <View className="flex-row flex-wrap gap-2">
                 {allFilterPills.map((opt) => (
                   <TouchableOpacity
                     key={opt.key}
-                    onPress={() => setActiveFilter(opt.key)}
+                    onPress={() => handleFilterPress(opt.key)}
                     className={`px-4 py-2 rounded-full border ${
                       activeFilter === opt.key
-                        ? "bg-midnight border-midnight"
+                        ? "bg-midnight border-midnight shadow-sm"
                         : "bg-surface border-stone-border"
                     }`}
                     accessibilityLabel={`Filter ${opt.label}`}
@@ -193,6 +242,7 @@ export function FilterToolbar<T extends Record<string, any>>({
                     <Text
                       variant="caption"
                       color={activeFilter === opt.key ? "surface" : "ash"}
+                      className="font-medium"
                     >
                       {opt.label}
                     </Text>
@@ -204,16 +254,16 @@ export function FilterToolbar<T extends Record<string, any>>({
 
           {/* Sort Section */}
           {sortOptions && sortOptions.length > 1 && (
-            <View className="mb-5">
+            <View className="mb-6">
               <SectionLabel>Sort by</SectionLabel>
               <View className="flex-row flex-wrap gap-2">
                 {sortOptions.map((opt) => (
                   <TouchableOpacity
                     key={opt.key}
-                    onPress={() => setActiveSort(opt.key)}
+                    onPress={() => handleSortPress(opt.key)}
                     className={`px-4 py-2 rounded-full border ${
                       activeSort === opt.key
-                        ? "bg-midnight border-midnight"
+                        ? "bg-midnight border-midnight shadow-sm"
                         : "bg-surface border-stone-border"
                     }`}
                     accessibilityLabel={`Sort by ${opt.label}`}
@@ -222,6 +272,7 @@ export function FilterToolbar<T extends Record<string, any>>({
                     <Text
                       variant="caption"
                       color={activeSort === opt.key ? "surface" : "ash"}
+                      className="font-medium"
                     >
                       {opt.label}
                     </Text>
@@ -231,18 +282,22 @@ export function FilterToolbar<T extends Record<string, any>>({
             </View>
           )}
 
-          {/* Done */}
+          {/* Apply / Done */}
           <TouchableOpacity
             onPress={closeSheet}
-            className="bg-midnight rounded-full py-3.5 items-center"
+            className="bg-midnight rounded-full py-3.5 items-center shadow-md"
             accessibilityLabel="Apply filters"
             accessibilityRole="button"
           >
-            <Text variant="label-medium" color="surface">
+            <Text
+              variant="label-medium"
+              color="surface"
+              className="font-semibold"
+            >
               Done
             </Text>
           </TouchableOpacity>
-        </View>
+        </BottomSheetView>
       </BottomSheetModal>
 
       {children(result)}

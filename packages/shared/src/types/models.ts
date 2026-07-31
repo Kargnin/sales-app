@@ -1,6 +1,12 @@
 import type {
-  UserRole, ShopStatus, OrderSource, OrderStatus,
-  PaymentStatus, PaymentMethod, TenantTier, UserStatus,
+  UserRole,
+  ShopStatus,
+  OrderSource,
+  OrderStatus,
+  PaymentStatus,
+  PaymentMethod,
+  TenantTier,
+  UserStatus,
 } from './enums';
 
 // ─── Base ─────────────────────────────────────────
@@ -31,6 +37,7 @@ export interface Shop {
   ownerName: string | null;
   phone: string;
   address: string | null;
+  imageUrl: string | null;
   latitude: number | null;
   longitude: number | null;
   status: ShopStatus;
@@ -98,7 +105,7 @@ export interface Payment {
 
 // ─── Auth DTOs ────────────────────────────────────
 export interface AuthPayload {
-  sub: string;       // userId
+  sub: string; // userId
   tenantId: string;
   role: UserRole;
   tokenVersion: number;

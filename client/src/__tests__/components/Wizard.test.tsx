@@ -1,7 +1,11 @@
 import React from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react-native";
 import { View, Text, TextInput } from "react-native";
-import { Wizard, type WizardConfig, type WizardStep } from "../../components/shared/Wizard";
+import {
+  Wizard,
+  type WizardConfig,
+  type WizardStep,
+} from "../../components/shared/Wizard";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -52,9 +56,7 @@ function makeStep(
   };
 }
 
-function createConfig(
-  overrides: Partial<WizardConfig> = {},
-): WizardConfig {
+function createConfig(overrides: Partial<WizardConfig> = {}): WizardConfig {
   return {
     steps: [
       makeStep("step1", "Basic Info", ["name"]),
@@ -189,9 +191,7 @@ describe("Wizard", () => {
   });
 
   it("shows error when onComplete throws", async () => {
-    const onComplete = jest
-      .fn()
-      .mockRejectedValue(new Error("Server error"));
+    const onComplete = jest.fn().mockRejectedValue(new Error("Server error"));
     const onClose = jest.fn();
     const config = createConfig({
       steps: [makeStep("step1", "Only Step")],
@@ -225,10 +225,7 @@ describe("Wizard", () => {
     });
 
     await act(() => {
-      fireEvent.changeText(
-        screen.getByTestId("field-description"),
-        "Value2",
-      );
+      fireEvent.changeText(screen.getByTestId("field-description"), "Value2");
     });
 
     // Go back
@@ -251,5 +248,42 @@ describe("Wizard", () => {
         description: "Value2",
       }),
     );
+  });
+
+  // ── Validation Schema Enforcement ───────────────────────────────────
+
+  it("blocks navigation to next step when Zod validation schema fails", async () => {
+    const { z } = require("zod");
+    const requiredSchema = z.object({
+      name: z.string().min(1, "Name is required"),
+    });
+
+    const step1 = {
+      key: "step1",
+      title: "Step 1 Required",
+      component: ({ onDataChange }: any) => (
+        <TextInput
+          testID="field-name"
+          onChangeText={(text: string) => onDataChange({ name: text })}
+        />
+      ),
+      validationSchema: requiredSchema,
+    };
+
+    const step2 = makeStep("step2", "Step 2 Target");
+
+    const config = createConfig({
+      steps: [step1, step2],
+    });
+
+    await render(<Wizard config={config} />);
+
+    // Attempt to tap Continue without filling required field
+    await act(() => {
+      fireEvent.press(screen.getByText("Continue"));
+    });
+
+    // Should remain on Step 1
+    expect(screen.queryByText("Step: Step 2 Target")).toBeNull();
   });
 });
