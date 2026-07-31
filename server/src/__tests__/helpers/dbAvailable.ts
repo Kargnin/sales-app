@@ -37,9 +37,8 @@ if (!dbAvailable) {
   console.warn(
     `\n⚠️  MySQL server is NOT running (tried ${config.DB_HOST}:${config.DB_PORT}).\n` +
       `    DB integration test suites were SKIPPED.\n` +
-      `    To run them, start MySQL first, e.g.:\n` +
-      `      - Homebrew:  brew services start mysql\n` +
-      `      - Docker:    docker start <mysql-container-name>\n` +
+      `    Start the project's MySQL container and re-run:\n` +
+      `      docker start mysql-local\n` +
       '    then re-run: npm run test:server\n',
   );
 }
