@@ -680,10 +680,11 @@ describeIfDb(
 
       it('5. rejects payment for already fully paid order', async () => {
         // Full payment
-        await request(app)
+        const fullPaymentRes = await request(app)
           .post(`/api/orders/${orderId}/payments`)
           .set('Authorization', `Bearer ${adminToken}`)
           .send({ amountPaid: 100.0, paymentMethod: 'upi' });
+        expect(fullPaymentRes.status).toBe(201); // order must be fully paid before the rejection check
 
         // Additional payment
         const res = await request(app)
