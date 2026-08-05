@@ -1,7 +1,11 @@
 import { View, TextInput } from "react-native";
 import { useFormContext, Controller } from "react-hook-form";
 import type { FieldValues } from "react-hook-form";
-import { FormInputController, FormSelectController, ImageUploader } from "../../components/shared";
+import {
+  FormInputController,
+  FormSelectController,
+  ImageUploader,
+} from "../../components/shared";
 import { Text } from "../../components/ui/text";
 
 const UNIT_OPTIONS = [
@@ -18,7 +22,11 @@ interface Step2PricingProps {
   initialData: Record<string, any>;
 }
 
-export function Step2Pricing({ onDataChange, fieldErrors, initialData }: Step2PricingProps) {
+export function Step2Pricing({
+  onDataChange,
+  fieldErrors,
+  initialData,
+}: Step2PricingProps) {
   const { control } = useFormContext<FieldValues>();
 
   return (
@@ -45,7 +53,10 @@ export function Step2Pricing({ onDataChange, fieldErrors, initialData }: Step2Pr
       <Controller
         name="price"
         control={control}
-        render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => {
+        render={({
+          field: { onChange, onBlur, value },
+          fieldState: { error },
+        }) => {
           const displayValue = value != null ? String(value) : "";
           return (
             <View className="gap-1.5">
@@ -98,53 +109,6 @@ export function Step2Pricing({ onDataChange, fieldErrors, initialData }: Step2Pr
         placeholder="Select unit"
         required
       />
-
-      {/* ---- Tax Rate (numeric) ---- */}
-      <View className="gap-1.5">
-        <Controller
-          name="taxRate"
-          control={control}
-          render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => {
-            const displayValue = value != null ? String(value) : "";
-            return (
-              <View className="gap-1.5">
-                <Text variant="label-medium" color="charcoal">
-                  Tax Rate
-                </Text>
-                <View
-                  className={`flex-row items-center bg-surface border rounded-lg h-11 px-3 ${
-                    error ? "border-ember-orange" : "border-stone-border"
-                  }`}
-                >
-                  <TextInput
-                    className="flex-1 font-body text-[15px] text-charcoal p-0"
-                    placeholder="0"
-                    placeholderTextColor="#848281"
-                    value={displayValue}
-                    onChangeText={(text) => {
-                      const filtered = text
-                        .replace(/[^0-9.]/g, "")
-                        .replace(/(\..*)\./g, "$1");
-                      const num = parseFloat(filtered);
-                      onChange(isNaN(num) ? 0 : num);
-                    }}
-                    onBlur={onBlur}
-                    keyboardType="decimal-pad"
-                  />
-                </View>
-                {error && (
-                  <Text variant="caption" color="ember">
-                    {error.message}
-                  </Text>
-                )}
-              </View>
-            );
-          }}
-        />
-        <Text variant="caption" color="ash">
-          Enter a percentage (e.g., 18 for 18%)
-        </Text>
-      </View>
     </View>
   );
 }

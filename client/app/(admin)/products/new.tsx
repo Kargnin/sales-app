@@ -22,7 +22,7 @@ export default function NewProductScreen() {
   const handleAnimationComplete = useCallback(() => {
     const product = createdProductRef.current;
     if (!product) return;
-    router.dismissTo('/(admin)/products');
+    router.dismissTo("/(admin)/products");
     router.push(`/(admin)/products/${product.id}`);
   }, [router]);
 
@@ -59,18 +59,20 @@ export default function NewProductScreen() {
       },
     ],
     onComplete: async (data) => {
-      const product = await apiClient<{ id: string; name: string }>("/api/products", {
-        method: "POST",
-        body: {
-          name: data.name,
-          description: data.description,
-          category: data.category,
-          price: Number(data.price),
-          unit: data.unit,
-          taxRate: data.taxRate !== undefined ? Number(data.taxRate) : 0,
-          imageUrl: data.imageUri,
+      const product = await apiClient<{ id: string; name: string }>(
+        "/api/products",
+        {
+          method: "POST",
+          body: {
+            name: data.name,
+            description: data.description,
+            category: data.category,
+            price: Number(data.price),
+            unit: data.unit,
+            imageUrl: data.imageUri,
+          },
         },
-      });
+      );
       // Invalidate the catalog cache so the new product appears without refresh
       queryClient.invalidateQueries({ queryKey: ["products"] });
       createdProductRef.current = { id: product.id, name: product.name };
