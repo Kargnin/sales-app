@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { describeIfDb } from './helpers/dbAvailable.js';
 import request from 'supertest';
-import { app } from '../index.js';
+import { app } from '../app.js';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db/connection.js';
 import { orders, products, shops } from '../db/schema.js';
