@@ -1,7 +1,27 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { View, ScrollView, Image, Share, TouchableOpacity, Alert, Modal, TextInput } from "react-native";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  View,
+  ScrollView,
+  Image,
+  Share,
+  TouchableOpacity,
+  Alert,
+  Modal,
+  TextInput,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Stack, useLocalSearchParams, useNavigation, router } from "expo-router";
+import {
+  Stack,
+  useLocalSearchParams,
+  useNavigation,
+  router,
+} from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm, FormProvider, Controller } from "react-hook-form";
@@ -180,7 +200,10 @@ function EditForm({
   return (
     <FormProvider {...methods}>
       <ScrollView className="flex-1">
-        <View className="gap-6 px-4 pt-4" style={{ paddingBottom: insets.bottom + 120 }}>
+        <View
+          className="gap-6 px-4 pt-4"
+          style={{ paddingBottom: insets.bottom + 120 }}
+        >
           {/* ---- Image ---- */}
           <Controller
             name="imageUri"
@@ -214,7 +237,10 @@ function EditForm({
             <Controller
               name="price"
               control={control}
-              render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => {
+              render={({
+                field: { onChange, onBlur, value },
+                fieldState: { error },
+              }) => {
                 const displayValue = value != null ? String(value) : "";
                 return (
                   <View className="gap-1.5">
@@ -261,7 +287,10 @@ function EditForm({
             <Controller
               name="stockQuantity"
               control={control}
-              render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => {
+              render={({
+                field: { onChange, onBlur, value },
+                fieldState: { error },
+              }) => {
                 const displayValue = value != null ? String(value) : "";
                 return (
                   <View className="gap-1.5">
@@ -315,11 +344,9 @@ function EditForm({
               variant="primary"
               className="mt-6"
               onPress={() => {
-                handleSubmit(
-                  async (data) => {
-                    await onSave(data);
-                  },
-                )();
+                handleSubmit(async (data) => {
+                  await onSave(data);
+                })();
               }}
               loading={isSaving}
             >
@@ -331,7 +358,9 @@ function EditForm({
               accessibilityLabel="Delete product"
               accessibilityRole="button"
             >
-              <Text variant="label-medium" color="ember">Delete Product</Text>
+              <Text variant="label-medium" color="ember">
+                Delete Product
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -402,7 +431,9 @@ export default function ProductDetailScreen() {
       await Share.share({
         message: `${product.name} - ${formatCurrency(product.price)}\nSKU: ${product.sku || "N/A"}`,
       });
-    } catch { /* cancelled */ }
+    } catch {
+      /* cancelled */
+    }
   }, [product]);
 
   useLayoutEffect(() => {
@@ -440,21 +471,25 @@ export default function ProductDetailScreen() {
         </View>
       ),
     });
-  }, [navigation, handleShare, isAdmin, isEditing, enterEditMode, handleBackPress]);
+  }, [
+    navigation,
+    handleShare,
+    isAdmin,
+    isEditing,
+    enterEditMode,
+    handleBackPress,
+  ]);
 
   if (isLoading) return <LoadingSkeleton />;
   if (isError || !product) return <ErrorState onRetry={refetch} />;
 
-  const specs = [
-    { label: "Category", value: product.category },
-    { label: "Weight", value: product.weight },
-    { label: "Dimensions", value: product.dimensions },
-    { label: "Material", value: product.material },
-  ];
+  const specs = [{ label: "Category", value: product.category }];
 
   return (
     <View className="flex-1 bg-canvas">
-      <Stack.Screen options={{ title: isEditing ? "Edit Product" : product.name }} />
+      <Stack.Screen
+        options={{ title: isEditing ? "Edit Product" : product.name }}
+      />
 
       {isEditing ? (
         <EditForm
@@ -470,7 +505,10 @@ export default function ProductDetailScreen() {
       ) : (
         <>
           <ScrollView className="flex-1">
-            <View className="gap-6 px-4 pt-4" style={{ paddingBottom: insets.bottom + 120 }}>
+            <View
+              className="gap-6 px-4 pt-4"
+              style={{ paddingBottom: insets.bottom + 120 }}
+            >
               {product.imageUrl ? (
                 <Image
                   source={{ uri: product.imageUrl }}
@@ -487,34 +525,55 @@ export default function ProductDetailScreen() {
               <View className="flex-row items-center justify-between">
                 <StockBadge status={product.stockStatus} />
                 {product.sku && (
-                  <Text variant="caption" color="ash">SKU: {product.sku}</Text>
+                  <Text variant="caption" color="ash">
+                    SKU: {product.sku}
+                  </Text>
                 )}
               </View>
 
               <View className="gap-1.5">
-                <Text variant="heading" color="charcoal">{product.name}</Text>
-                <Text variant="display" color="midnight">{formatCurrency(product.price)}</Text>
-                <Text variant="body" color="ash">{product.stockQuantity} units in stock</Text>
+                <Text variant="heading" color="charcoal">
+                  {product.name}
+                </Text>
+                <Text variant="display" color="midnight">
+                  {formatCurrency(product.price)}
+                </Text>
+                <Text variant="body" color="ash">
+                  {product.stockQuantity} units in stock
+                </Text>
               </View>
 
               {product.description && (
                 <View className="gap-2">
-                  <Text variant="heading-sm" color="charcoal">Overview</Text>
-                  <Text variant="body" color="graphite" className="leading-6">{product.description}</Text>
+                  <Text variant="heading-sm" color="charcoal">
+                    Overview
+                  </Text>
+                  <Text variant="body" color="graphite" className="leading-6">
+                    {product.description}
+                  </Text>
                 </View>
               )}
 
               <View className="gap-2">
-                <Text variant="heading-sm" color="charcoal">Specifications</Text>
+                <Text variant="heading-sm" color="charcoal">
+                  Specifications
+                </Text>
                 <ProductSpecsTable specs={specs} />
               </View>
             </View>
           </ScrollView>
 
-          <View className="border-t border-stone-border bg-surface px-4 py-3" style={{ paddingBottom: insets.bottom + 8 }}>
+          <View
+            className="border-t border-stone-border bg-surface px-4 py-3"
+            style={{ paddingBottom: insets.bottom + 8 }}
+          >
             <View className="flex-row gap-3">
-              <Button variant="secondary" className="flex-1">Check Availability</Button>
-              <Button variant="primary" className="flex-1">Add to Order</Button>
+              <Button variant="secondary" className="flex-1">
+                Check Availability
+              </Button>
+              <Button variant="primary" className="flex-1">
+                Add to Order
+              </Button>
             </View>
           </View>
         </>
@@ -532,11 +591,20 @@ export default function ProductDetailScreen() {
       >
         <View className="flex-1 bg-midnight/40 items-center justify-center px-4">
           <View className="bg-canvas border border-stone-border rounded-2xl p-6 w-full max-w-[340px] gap-4 shadow-xl">
-            <Text variant="heading-sm" color="charcoal" className="text-center mt-1">
+            <Text
+              variant="heading-sm"
+              color="charcoal"
+              className="text-center mt-1"
+            >
               Delete Product
             </Text>
-            <Text variant="body" color="graphite" className="text-center leading-5 mb-2">
-              Are you sure you want to delete "{product?.name}"? This cannot be undone.
+            <Text
+              variant="body"
+              color="graphite"
+              className="text-center leading-5 mb-2"
+            >
+              Are you sure you want to delete "{product?.name}"? This cannot be
+              undone.
             </Text>
 
             <View className="gap-3">
@@ -546,13 +614,20 @@ export default function ProductDetailScreen() {
                 onPress={async () => {
                   if (!product) return;
                   try {
-                    await apiClient(`/api/products/${product.id}`, { method: "DELETE" });
+                    await apiClient(`/api/products/${product.id}`, {
+                      method: "DELETE",
+                    });
                     queryClient.invalidateQueries({ queryKey: ["products"] });
                     setShowDeleteModal(false);
                     router.replace("/(admin)/products");
                   } catch (err) {
                     setShowDeleteModal(false);
-                    Alert.alert("Error", err instanceof Error ? err.message : "Failed to delete product");
+                    Alert.alert(
+                      "Error",
+                      err instanceof Error
+                        ? err.message
+                        : "Failed to delete product",
+                    );
                   }
                 }}
               >
