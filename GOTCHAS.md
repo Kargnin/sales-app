@@ -33,21 +33,21 @@ Severity: **SEV-1** = must fix (vulnerability / correctness / data-loss), **SEV-
 
 ## Security
 
-### [SEV-1] Don't rely on logout to end sessions — there is no server-side logout, and `/auth/refresh` ignores `tokenVersion`, so stolen refresh tokens stay valid for 7 days
+### [SEV-1] Don't rely on logout to end sessions — there is no server-side logout, and `/auth/refresh` ignores `tokenVersion`, so stolen refresh tokens stay valid for 7 days **[FIXED: 405a9ee]**
 
 - **File:** `server/src/routes/auth.routes.ts:150-183` (/auth/refresh), `client/src/stores/authStore.ts:98-107` (logout)
 - **Issue:** `logout` only deletes client tokens (grep: zero `logout` matches in `server/src`). `tokenVersion` is bumped on password change (users.routes.ts:82) and deactivation (users.routes.ts:225), and `authenticate.ts:39` enforces it for **access** tokens — but `/auth/refresh` never compares `decoded.tokenVersion` to the DB value, so any previously issued refresh token (7d expiry) keeps minting new access tokens after logout/password change. Stolen refresh tokens are unrevocable.
 - **Best practice violated:** OWASP Session Management — logout must invalidate server-side state; refresh tokens must be revocable.
 - **Fix:** Add `POST /auth/logout` that bumps `tokenVersion` (or Redis jti denylist); in `/auth/refresh`, reject when `decoded.tokenVersion !== user.tokenVersion`; consider refresh-token rotation with jti family tracking.
 
-### [SEV-1] Don't return `cancellationToken` from order APIs — it's the customer's unauthenticated cancel secret, and any user with order visibility can cancel any order via `POST /public/cancel`
+### [SEV-1] Don't return `cancellationToken` from order APIs — it's the customer's unauthenticated cancel secret, and every user with order visibility can now cancel any order via `POST /public/cancel` **[FIXED: 86d9028]** _(hash-at-rest + response exclusion done; signed customer link hardening still open)_
 
 - **File:** `server/src/routes/orders.routes.ts:207, 282, 338, 503, 623` (returned in list/detail/payment/status), `orders.routes.ts:73-149` (cancel by token, no auth)
 - **Issue:** The public cancel portal authenticates by token only. Since every authenticated order response includes `cancellationToken` in plaintext, exploit chain is: `GET /api/orders` → token → `POST /public/cancel` — bypassing admin approval entirely.
 - **Best practice violated:** Broken access control (OWASP A01); capability tokens must not be returned to principals not entitled to the capability; secrets hashed at rest.
 - **Fix:** Exclude `cancellationToken`/`cancellationWindowExpiresAt` from all order responses; store SHA-256 hash of the token; gate cancellation behind a signed customer link; make the endpoint idempotent + audit-logged.
 
-### [SEV-1] Don't ship the `DBG-VALIDATE` body logger in `validate.ts` — it prints plaintext passwords (login/register) to the server console
+### [SEV-1] Don't ship the `DBG-VALIDATE` body logger in `validate.ts` — it prints plaintext passwords (login/register) to the server console **[FIXED: 2e9fb31]**
 
 - **File:** `server/src/middleware/validate.ts:8-11` (⚠️ currently an **uncommitted working-tree change** — do NOT commit as-is)
 - **Issue:** On every failed validation the middleware logs `body=${JSON.stringify(req.body).slice(0,300)}`. Applied to `POST /auth/login` and `/auth/register`, so failed attempts log usernames **and passwords** in plaintext.
@@ -75,7 +75,7 @@ Severity: **SEV-1** = must fix (vulnerability / correctness / data-loss), **SEV-
 - **Best practice violated:** OWASP rate limiting / credential-stuffing protection; correct client-IP resolution.
 - **Fix:** `app.set('trust proxy', 1)` (or correct hop count); tighten login to ~5–10/15min per IP + per-username exponential backoff; separate looser limiters for register/refresh.
 
-### [SEV-2] Don't keep client-side authorization role-blind — the `(salesman)` route group is empty, so salesmen are redirected into a dead end
+### [SEV-2] Don't keep client-side authorization role-blind — the `(salesman)` route group is empty, so salesmen are redirected into a dead end **[FIXED: b7ba058]**
 
 - **File:** `client/app/_layout.tsx:28-32`, `client/app/(admin)/_layout.tsx` (no role check), `client/app/(salesman)/` (**zero files**)
 - **Issue:** Root `AuthRedirect` only checks authenticated-vs-auth, never role; any salesman can deep-link into `/(admin)/…` (server 403s the API calls, but admin UI renders + errors). Worse: `_layout.tsx:31` routes salesmen to `/(salesman)/visits` which **doesn't exist** → salesmen hit `+not-found` and cannot use the app at all.
@@ -121,21 +121,21 @@ Severity: **SEV-1** = must fix (vulnerability / correctness / data-loss), **SEV-
 
 ## Server
 
-### [SEV-1] Payment recording has a lost-update race — two concurrent payments can overpay an order
+### [SEV-1] Payment recording has a lost-update race — two concurrent payments can overpay an order **[OPEN — deferred until the order flow ships (user decision: order logic is not yet implemented)]**
 
 - **File:** `server/src/routes/orders.routes.ts:464-504` (same at :534-560 for mark-paid)
 - **Issue:** `existingPayments` is read _before_ the transaction; the transaction never locks the order row. Two concurrent `POST /:id/payments` both read `remaining = 100`, both insert ₹100 → order overpaid 2× while `paymentStatus` says `paid`. The suite already tests the cancellation race (orders-payments.test.ts:543-567) but not this one.
 - **Best practice violated:** Money mutations must be serialized (row lock / atomic conditional update).
 - **Fix:** Inside the transaction `SELECT … FOR UPDATE` the order row (or atomic `UPDATE … WHERE <balance condition>` + check `affectedRows`); recompute remaining inside the lock. Add a `Promise.all` double-payment test → exactly one 201.
 
-### [SEV-1] PATCH /api/shops/:id lets an admin reject a shop while bypassing the order-cancellation cascade and safety guard
+### [SEV-1] PATCH /api/shops/:id lets an admin reject a shop while bypassing the order-cancellation cascade and safety guard **[FIXED: a6c33dd]**
 
 - **File:** `server/src/routes/shops.routes.ts:272-331` + `packages/shared/src/schemas/shop.schemas.ts:55-57`
 - **Issue:** `updateShopSchema` includes `status`; `PATCH /:id` applies it (line 315) after fieldGuard (which only rejects `id`/`tenantId`). An admin can send `{"status":"rejected"}` and bypass every invariant in `POST /:id/reject` (shops.routes.ts:173-269): no dispatched/delivered-order check, no cancellation of pending/confirmed orders, no notifications — a shop with live dispatched orders becomes `rejected` while orders stay live. Tests only cover `/reject` (shops-visits.test.ts:336-376).
 - **Best practice violated:** State transitions must be centralized; every mutation path must enforce the same invariants.
 - **Fix:** Remove `status` from `updateShopSchema`; force transitions through `/approve` and `/reject` action endpoints.
 
-### [SEV-1] `db:seed` wipes every table with no environment guard
+### [SEV-1] `db:seed` wipes every table with no environment guard **[FIXED: b8e62b3]**
 
 - **File:** `server/src/db/seed.ts:10-19`
 - **Issue:** Seed starts by `DELETE`-ing all rows from all 9 tables unconditionally, then logs demo credentials (seed.ts:44). Running `npm run db:seed` with a misconfigured `.env` against any DB is instant silent data loss.
@@ -170,7 +170,7 @@ Severity: **SEV-1** = must fix (vulnerability / correctness / data-loss), **SEV-
 - **Best practice violated:** Centralized error handling with error-type → status mapping; no try/catch in handlers.
 - **Fix:** Throw domain errors (`ApiError(status, code)`) from routes and let them propagate; map DB error codes in one error middleware; log once, structured.
 
-### [SEV-2] Validation coverage is patchy — 7 routes skip zod entirely
+### [SEV-2] Validation coverage is patchy — 7 routes skip zod entirely **[PARTIAL: register-salesman + reset-password fixed in 405a9ee; refresh/verify-invite/PATCH /me/PATCH /:id/public-cancel/PATCH /:id/status still open]**
 
 - **File:** `auth.routes.ts:150 (/refresh)`, `:186 (/verify-invite)`, `:220 (/register-salesman)`, `:296 (/reset-password)`; `users.routes.ts:47 (PATCH /me)`, `:188 (PATCH /:id)`; `orders.routes.ts:73 (public/cancel)`, `:570 (PATCH /:id/status)`
 - **Issue:** Ad-hoc manual checks with inconsistent semantics — missing `token` on public/cancel returns 404 "Order not found" (missing _input_ reported as missing _resource_); /register-salesman re-implements password checks the shared schemas encode; /reset-password is a mock that logs the email.
@@ -246,28 +246,28 @@ Severity: **SEV-1** = must fix (vulnerability / correctness / data-loss), **SEV-
 
 ## Client
 
-### [SEV-1] Salesman users are redirected to a route group that does not exist — `(salesman)` is missing entirely
+### [SEV-1] Salesman users are redirected to a route group that does not exist — `(salesman)` is missing entirely **[FIXED: b7ba058]**
 
 - **File:** `client/app/_layout.tsx:31`, `client/app/index.tsx:20` (only `(admin)` + `(auth)` exist)
 - **Issue:** AuthRedirect sends `role === "salesman"` to `/(salesman)/visits` → unmatched route → `+not-found`; the salesman menu also points into the admin group (`client/src/components/layout/sideMenuItems.ts:19-22`). AuthRedirect has **no role check**, so a salesman deep-linking to `/(admin)/team` is never redirected.
 - **Best practice violated:** Role-based route guarding; complete route groups for every supported role.
 - **Fix:** Create the `(salesman)` group with `_layout.tsx` + guards, or block salesman logins until it ships; add role checks to AuthRedirect.
 
-### [SEV-1] Logout does not clear the react-query cache — cross-tenant data leak on shared devices
+### [SEV-1] Logout does not clear the react-query cache — cross-tenant data leak on shared devices **[FIXED: deced6f]**
 
 - **File:** `client/src/components/layout/SideMenu.tsx:87-91` → `client/src/stores/authStore.ts:98-107`
 - **Issue:** `logout()` only deletes tokens + zustand state. The QueryClient (staleTime 5 min, `client/src/lib/queryClient.ts:6`) still holds the previous user's `["shops"]`, `["products"]`, `["orders"]`, `["visits"]`, `["employees"]`, `["dashboard","metrics"]` data. The next account on the same device renders the prior tenant's data instantly from cache.
 - **Best practice violated:** Session lifecycle must clear server-state caches on logout.
 - **Fix:** Call `queryClient.clear()` (or `removeQueries()`) inside `logout()`.
 
-### [SEV-1] "Place Order" navigates to a route that doesn't exist; order creation is a stub
+### [SEV-1] "Place Order" navigates to a route that doesn't exist; order creation is a stub **[OPEN — deferred until the order flow ships (user decision: order logic is not yet implemented)]**
 
 - **File:** `client/app/(admin)/shops/index.tsx:102-104` → `router.push('/(admin)/orders/new?shopId=…')` (orders dir has only `index.tsx` + `select-products.tsx`; **no `orders/new.tsx`**)
 - **Issue:** Tapping "Place Order" (grid card or map sheet) hits an unmatched route. Dashboard "New Order" FAB has **no `onPress`** (`client/app/(admin)/dashboard.tsx:29-45`); `select-products.tsx:149-155` "Review Order" just `router.back()` with a TODO; `orders/index.tsx` is a placeholder. The order feature is dead-end UI.
 - **Best practice violated:** No dead navigation targets; no half-wired CTAs in shipped flows.
 - **Fix:** Implement `orders/new.tsx` (or remove the CTAs); wire the FAB; land select-products into a review screen that submits via a mutation invalidating `["orders"]`.
 
-### [SEV-1] Invite link hardcodes `http://localhost:8081` — copied links are broken for every real user
+### [SEV-1] Invite link hardcodes `http://localhost:8081` — copied links are broken for every real user **[FIXED: c770f04]**
 
 - **File:** `client/app/(admin)/team/index.tsx:39`
 - **Issue:** `const resolvedLink = \`http://localhost:8081/invite/${res.inviteToken}\``. The app has a deep-link scheme (`client/app.json:6` → `salesapp://`) and `EXPO_PUBLIC_*` env pattern, but neither is used here.
@@ -345,21 +345,21 @@ Severity: **SEV-1** = must fix (vulnerability / correctness / data-loss), **SEV-
 
 ## Frontend / UI
 
-### [SEV-1] `rounded-10`, `rounded-pill`, and `bg-primary` generate ZERO CSS — the design system's radius and primary backgrounds silently don't exist
+### [SEV-1] `rounded-10`, `rounded-pill`, and `bg-primary` generate ZERO CSS — the design system's radius and primary backgrounds silently don't exist **[FIXED: 4ca33c9]**
 
 - **File:** `client/global.css:7-22` (no `--radius-*` / `--color-primary` tokens in `@theme`); consumers: `components/ui/card.tsx:13` (`rounded-10`), `components/ui/button.tsx:30` (`rounded-pill`), `CategoryTabs.tsx:34`, `form/FormField.tsx:39`, `FilterToolbar.tsx:151`, `SearchablePillSelector.tsx:50`, `Wizard.tsx:313`, `orders/select-products.tsx:179`, `bg-primary` at `Step2ShopLocation.tsx:393`, `LocationPickerModal.tsx:164`, `shops/[id].tsx:312,658,822,825`
 - **Issue:** **Verified by compiling the project's own PostCSS/Tailwind pipeline**: Tailwind v4 only emits `rounded-*` for named `--radius-*` theme keys; `bg-primary` needs `--color-primary`. No build error — classes are silently dropped. Every Card is square-cornered, every primary/secondary Button is a square rectangle, and the "Open Full Map" button / location-picker pin pill / "Create Order for Outlet" tile render **transparent backgrounds with white text** (invisible in bright daylight).
 - **Best practice violated:** Centralized design tokens must be complete and resolvable; design system specifies 10px radius + pill shapes.
 - **Fix:** Add `--radius-10: 10px`, `--radius-pill: 9999px`, `--color-primary: #121212` to `@theme` in `global.css` (or replace usages with `rounded-[10px]`/`rounded-full`/`bg-midnight`). Add a CI step that greps compiled CSS for a sentinel class list so silent drops can't happen again.
 
-### [SEV-1] Primary CTAs with no `onPress` — dead buttons on dashboard, product detail, and dashboard lists
+### [SEV-1] Primary CTAs with no `onPress` — dead buttons on dashboard, product detail, and dashboard lists **[OPEN — deferred until the order flow ships (user decision)]**
 
 - **File:** `client/app/(admin)/dashboard.tsx:29-45` ("New Order" FAB — no onPress, no accessibilityRole), `client/app/(admin)/products/[id].tsx:516-517` ("Check Availability" / "Add to Order"), `client/src/features/dashboard/recent-visits-list.tsx:70-74` ("View All")
 - **Issue:** The most prominent action on the admin dashboard and on product detail do nothing when tapped; a field agent tapping "Add to Order" gets zero feedback.
 - **Best practice violated:** Interactive elements must have handlers; don't ship inert CTAs.
 - **Fix:** Wire to real navigation (`/orders/select-products` etc.) or replace with a disabled state + label. (See also Client SEV-1 "order flow is a stub".)
 
-### [SEV-1] Reduced-motion convention violated in the shops bottom sheet, map camera, and every `Modal` animation
+### [SEV-1] Reduced-motion convention violated in the shops bottom sheet, map camera, and every `Modal` animation **[FIXED: b398914]**
 
 - **File:** `ShopBottomSheetDrawer.tsx:51-73` (no `overrideReduceMotion`; siblings `FormSelect.tsx:123-125` and `FilterToolbar.tsx:220-222` do it right); `ShopMapCanvas.native.tsx:185-188,194-197,212-215,230-239` (`animateCamera` 400/500ms, `fitToCoordinates animated:true`); `LocationPickerModal.tsx:137` (`animationType="slide"`); `ImageUploader.tsx:131`, `useEditGuard.tsx:163`, `shops/[id].tsx:855`, `products/[id].tsx:530` (`animationType="fade"`)
 - **Issue:** Repo convention (CLAUDE.md → Accessibility) requires every animation to check `useReducedMotion()` and run at duration 0 when enabled. These six spots animate unconditionally. The bottom sheet also snaps open at `index={1}` on mount (always visible at 45% when the map screen loads).
@@ -433,21 +433,21 @@ Severity: **SEV-1** = must fix (vulnerability / correctness / data-loss), **SEV-
 
 ## Architecture / Low-Level Design
 
-### [SEV-1] The shared contract is a lie: `packages/shared` types say `number`, the API actually returns `string` — and the client keeps its own parallel type universe that drifted
+### [SEV-1] The shared contract is a lie: `packages/shared` types say `number`, the API actually returns `string` — and the client keeps its own parallel type universe that drifted **[PARTIAL: phantom Product fields (weight/dimensions/material) removed in abaa13d; number/string wire drift + client type-universe consolidation still open]**
 
 - **File:** `packages/shared/src/types/models.ts:41-42,66,82` vs `client/src/types/index.ts:28-29,54,79` vs `server/src/routes/products.routes.ts:116,158` + `shops.routes.ts:102-103,313-314`
 - **Issue:** MySQL DECIMAL columns come back as strings and the server even forces it (`price: String(price)`); shared models/schemas say `number` (shop.schemas.ts:29-30); the client hand-patched its types to `string` to match reality → full parallel type universe (110 lines) with drift: `Product.weight/dimensions/material` (client types/index.ts:60-62) exist in **no DB column** (schema.ts:105-119) and are read in `products/[id].tsx:448-453` (always undefined); `DashboardMetrics.totalOrders` (types/index.ts:93) is never returned by the server; client `User` drops `tenantName` that the server sends. Every consumer pays the tax: `parseFloat(product.price)` (products/index.tsx:26), `Number(shop.latitude)` (shops/[id].tsx:163-164,583-584).
 - **Best practice violated:** Single source of truth; types that lie to consumers.
 - **Fix:** Pick one wire format — keep DECIMAL strings at the DB but parse to `number` in per-entity response serializers on the server, or change shared types to `string` + `z.coerce.number()` at the boundary. Delete `client/src/types/index.ts`; import from `@sales-app/shared`. Remove phantom fields or add DB columns.
 
-### [SEV-1] Client-side Zod schemas duplicate `packages/shared` with behavioral divergence — the client rejects valid server input
+### [SEV-1] Client-side Zod schemas duplicate `packages/shared` with behavioral divergence — the client rejects valid server input **[FIXED: 20b35af]**
 
 - **File:** `client/src/lib/validation.ts:3-11` vs `packages/shared/src/schemas/auth.schemas.ts:14-18` (loginSchema); `validation.ts:15-21` vs `auth.schemas.ts:5-11` (signup); `validation.ts:41-49` vs `product.schemas.ts:28-39` (productEdit)
 - **Issue:** Client `loginSchema` adds `.min(6, "Password must be at least 6 characters")` that the shared/server schema does **not** have — a user with a valid 4-char password can never log in from the app. Signup drops `max(255)`/`max(128)`/phone `min(10)` bounds; `productEditSchema` uses `imageUri` where the server schema says `imageUrl`, and omits `sku`/`taxRate`.
 - **Best practice violated:** DRY; single source of truth for validation.
 - **Fix:** Delete `client/src/lib/validation.ts`; re-export shared schemas from the client (zod schemas are isomorphic — use them directly in `zodResolver`). If client rules must differ, derive via `.extend()`, never fork.
 
-### [SEV-1] `taxRate` is collected, validated, sent — then silently dropped by the server
+### [SEV-1] `taxRate` is collected, validated, sent — then silently dropped by the server **[FIXED: d0a991b]** _(removed end-to-end — user confirmed tax rate is not needed)_
 
 - **File:** `client/src/features/products/Step2Pricing.tsx:102-147` → `app/(admin)/products/new.tsx:70` → `packages/shared/src/schemas/product.schemas.ts:37` → `server/src/routes/products.routes.ts:107-122` (destructured but never inserted; no column in `db/schema.ts:105-119`)
 - **Issue:** The wizard collects a tax rate, the schema validates it, the client sends it, and the server ignores it with no error. User data is lost silently.
@@ -534,10 +534,21 @@ Severity: **SEV-1** = must fix (vulnerability / correctness / data-loss), **SEV-
 - **Best practice violated:** Test infra must fail loudly on real problems.
 - **Fix:** Drop jest-native; narrow the warn filter to known-noise patterns; add `coverageThreshold` + CI `--coverage` gate.
 
+### [SEV-3] Server integration suite is FLAKY in full runs with local MySQL — failures rotate across files, every file passes in isolation
+
+- **File:** `server/src/__tests__/` (all DB suites) + `server/vitest.config.ts`
+- **Issue:** Running the whole suite against the local `mysql-local` container produces random failures (401/400 on login/refresh/deactivate flows, "order not found" on payments, etc.) that rotate between runs and disappear when any single file runs alone. Observed Aug 2026 during the audit-fix pass: `auth.test.ts`, `deactivation.test.ts`, `dashboard.test.ts`, `notifications.e2e.test.ts`, `orders-payments.test.ts` all failed in different runs, and passed in isolation. The trigger correlates with `health.test.ts` / `middleware.test.ts` sharing the run. Pre-existing — NOT caused by the fixes (verified by running the DB suites without the two unit files: fully deterministic).
+- **Best practice violated:** Test runs must be deterministic.
+- **Fix (workaround, verified):** run DB suites without the two unit files, then the unit files separately:
+  `cd server && npx vitest run --fileParallelism=false --silent --exclude src/__tests__/health.test.ts --exclude src/__tests__/middleware.test.ts`
+  `cd server && npx vitest run src/__tests__/health.test.ts src/__tests__/middleware.test.ts --silent`
+  Root-cause investigation (worker reuse, `app.listen` on import, MySQL pool accumulation) is still open.
+
 ---
 
 ## Audit trail
 
-| Date       | Audit                                                                                      | Source                               |
-| ---------- | ------------------------------------------------------------------------------------------ | ------------------------------------ |
-| 2026-08-05 | Security / Server / Client / Design / Frontend best-practices audit (5 parallel subagents) | Branch `review/best-practices-audit` |
+| Date       | Audit                                                                                      | Source                                                   |
+| ---------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| 2026-08-05 | Security / Server / Client / Design / Frontend best-practices audit (5 parallel subagents) | Branch `review/best-practices-audit`                     |
+| 2026-08-05 | 11 fixes applied & committed (S1-S7, C1-C6) — see [FIXED] markers per entry                | Branch `review/best-practices-audit` (2e9fb31 → b398914) |
