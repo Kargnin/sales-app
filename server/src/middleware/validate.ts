@@ -5,6 +5,7 @@ export const validate = (schema: ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const result = schema.safeParse(req.body);
     if (!result.success) {
+      // NOTE: never log req.body here — it contains credentials (login/register).
       res.status(400).json({
         error: 'Validation failed',
         details: result.error.format(),
