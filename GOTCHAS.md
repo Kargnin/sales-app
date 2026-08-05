@@ -536,13 +536,19 @@ Severity: **SEV-1** = must fix (vulnerability / correctness / data-loss), **SEV-
 
 ### [SEV-3] Server integration suite is FLAKY in full runs with local MySQL — failures rotate across files, every file passes in isolation
 
-- **File:** `server/src/__tests__/` (all DB suites) + `server/vitest.config.ts`
+- **File:** `server/src/__tests__/` (all DB suites) + `server/src/index.ts` (was), `server/src/app.ts`
 - **Issue:** Running the whole suite against the local `mysql-local` container produces random failures (401/400 on login/refresh/deactivate flows, "order not found" on payments, etc.) that rotate between runs and disappear when any single file runs alone. Observed Aug 2026 during the audit-fix pass: `auth.test.ts`, `deactivation.test.ts`, `dashboard.test.ts`, `notifications.e2e.test.ts`, `orders-payments.test.ts` all failed in different runs, and passed in isolation. The trigger correlates with `health.test.ts` / `middleware.test.ts` sharing the run. Pre-existing — NOT caused by the fixes (verified by running the DB suites without the two unit files: fully deterministic).
 - **Best practice violated:** Test runs must be deterministic.
-- **Fix (workaround, verified):** run DB suites without the two unit files, then the unit files separately:
+- **Root-cause investigation (2026-08-05 follow-up, branch `fix/test-flakiness`):**
+  - **Confirmed flaw (fixed):** `server/src/index.ts` called `app.listen(PORT)` at module import time — a side-effectful import. Any test file importing `{ app }` booted a real server; parallel vitest forks raced for port 3001 (`EADDRINUSE`), and the unhandled server `error` event is a worker-crash hazard. Fixed by extracting the express app into `server/src/app.ts` (no listen) and keeping the listener only in the `index.ts` entry.
+  - **Exonerated:** supertest wraps the app in its own ephemeral server (`typeof app === 'function'` → `http.createServer(app)` + `listen(0)`), so test traffic never touches port 3001 — the listen race cannot corrupt responses, only crash forks.
+  - **Exonerated:** MySQL pool exhaustion — `max_connections` 151, `Max_used_connections` peaked at 9 during failing runs, zero errors in container logs.
+  - **Exonerated:** leftover-data collisions — only `users.username` is unique-indexed and every test uses UUID usernames; fixed emails/phones are not constrained.
+  - **Anomaly:** failing runs returned `400` responses with no `error` body — no code path in the app produces that shape, pointing at an external/transient cause. Repo reflog shows heavy branch/commit churn on the same machine in the exact failing window (audit wrap-up), consistent with concurrent test-suite activity against the shared `sales_app_dev` DB (the audit ran 5 parallel subagents).
+- **Verification:** after the `app.ts` split, 25+ consecutive full-suite runs (including two simultaneous identical suites against the same DB) all green. Plain `npm run test:server` (i.e. `vitest run`) is the canonical command — the workaround below is no longer required, but kept as a fallback if symptoms recur.
+- **Fallback workaround (if it ever flakes again):**
   `cd server && npx vitest run --fileParallelism=false --silent --exclude src/__tests__/health.test.ts --exclude src/__tests__/middleware.test.ts`
   `cd server && npx vitest run src/__tests__/health.test.ts src/__tests__/middleware.test.ts --silent`
-  Root-cause investigation (worker reuse, `app.listen` on import, MySQL pool accumulation) is still open.
 
 ---
 
@@ -552,3 +558,4 @@ Severity: **SEV-1** = must fix (vulnerability / correctness / data-loss), **SEV-
 | ---------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
 | 2026-08-05 | Security / Server / Client / Design / Frontend best-practices audit (5 parallel subagents) | Branch `review/best-practices-audit`                     |
 | 2026-08-05 | 11 fixes applied & committed (S1-S7, C1-C6) — see [FIXED] markers per entry                | Branch `review/best-practices-audit` (2e9fb31 → b398914) |
+| 2026-08-05 | SEV-3 test-flakiness root-cause investigation + `app.ts` split fix                         | Branch `fix/test-flakiness`                              |

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { describeIfDb } from './helpers/dbAvailable.js';
 import request from 'supertest';
-import { app } from '../index.js';
+import { app } from '../app.js';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db/connection.js';
 import { orders, products, shops, users, notifications } from '../db/schema.js';
@@ -43,6 +43,8 @@ describeIfDb.sequential(
         email: 'admin_a@tenant-a.com',
         phone: '9876543210',
       });
+      expect(regResA.status).toBe(201);
+      expect(regResA.body.accessToken).toBeDefined();
       adminAToken = regResA.body.accessToken;
       adminAId = regResA.body.user.id;
       tenantAId = regResA.body.user.tenantId;
@@ -56,6 +58,7 @@ describeIfDb.sequential(
           password: 'password12345',
           role: 'salesman',
         });
+      expect(salesResA.status).toBe(201);
       salesmanAId = salesResA.body.id;
 
       // Login Salesman A to get token
@@ -63,6 +66,7 @@ describeIfDb.sequential(
         username: salesmanAUsername,
         password: 'password12345',
       });
+      expect(loginResA.status).toBe(200);
       salesmanAToken = loginResA.body.accessToken;
 
       // Seed a product for Tenant A
@@ -85,6 +89,8 @@ describeIfDb.sequential(
         email: 'admin_b@tenant-b.com',
         phone: '8765432109',
       });
+      expect(regResB.status).toBe(201);
+      expect(regResB.body.accessToken).toBeDefined();
       adminBToken = regResB.body.accessToken;
       adminBId = regResB.body.user.id;
       tenantBId = regResB.body.user.tenantId;
@@ -98,6 +104,7 @@ describeIfDb.sequential(
           password: 'password12345',
           role: 'salesman',
         });
+      expect(salesResB.status).toBe(201);
       salesmanBId = salesResB.body.id;
 
       // Login Salesman B to get token
@@ -105,6 +112,7 @@ describeIfDb.sequential(
         username: salesmanBUsername,
         password: 'password12345',
       });
+      expect(loginResB.status).toBe(200);
       salesmanBToken = loginResB.body.accessToken;
     });
 

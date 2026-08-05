@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { describeIfDb } from './helpers/dbAvailable.js';
 import request from 'supertest';
-import { app } from '../index.js';
+import { app } from '../app.js';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db/connection.js';
 import {
@@ -357,6 +357,8 @@ describeIfDb(
               { productId: testProduct1Id, quantity: 4, unitPrice: 25.0 },
             ], // 100.00
           });
+        expect(res.status).toBe(201);
+        expect(res.body.cancellationToken).toBeDefined();
         validToken = res.body.cancellationToken;
         orderId = res.body.id;
       });
@@ -414,6 +416,9 @@ describeIfDb(
             ],
           });
 
+        expect(orderRes.status).toBe(201);
+        expect(orderRes.body.cancellationToken).toBeDefined();
+
         const token = orderRes.body.cancellationToken;
 
         const cancelRes = await request(app)
@@ -441,6 +446,8 @@ describeIfDb(
             ],
           });
 
+        expect(orderRes.status).toBe(201);
+
         // Manually backdate cancellation window expiry in DB
         await db
           .update(orders)
@@ -465,6 +472,9 @@ describeIfDb(
               { productId: testProduct1Id, quantity: 2, unitPrice: 25.0 },
             ],
           });
+
+        expect(orderRes.status).toBe(201);
+        expect(orderRes.body.cancellationToken).toBeDefined();
 
         // Cancel once
         await request(app)
@@ -491,6 +501,8 @@ describeIfDb(
             ],
           });
 
+        expect(orderRes.status).toBe(201);
+
         // Update to dispatched
         await db
           .update(orders)
@@ -515,6 +527,8 @@ describeIfDb(
               { productId: testProduct1Id, quantity: 2, unitPrice: 25.0 },
             ],
           });
+
+        expect(orderRes.status).toBe(201);
 
         // Update to delivered
         await db
@@ -583,6 +597,7 @@ describeIfDb(
               { productId: testProduct1Id, quantity: 4, unitPrice: 25.0 },
             ], // Total: 100.00
           });
+        expect(res.status).toBe(201);
         orderId = res.body.id;
 
         // Re-create a clean order in other tenant
