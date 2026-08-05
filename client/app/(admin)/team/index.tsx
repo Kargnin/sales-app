@@ -45,9 +45,12 @@ export default function TeamScreen() {
           method: "POST",
         },
       );
-      // Build link targeting our public acceptance route
-      const inviteBaseUrl =
-        process.env.EXPO_PUBLIC_INVITE_BASE_URL ?? "salesapp://";
+      // Build link targeting our public acceptance route.
+      // Strip trailing slashes from the base so the join is always clean
+      // (e.g. "salesapp://" + "/invite/x" -> "salesapp://invite/x").
+      const inviteBaseUrl = (
+        process.env.EXPO_PUBLIC_INVITE_BASE_URL ?? "salesapp://"
+      ).replace(/\/+$/, "");
       const resolvedLink = `${inviteBaseUrl}/invite/${res.inviteToken}`;
       setInviteLink(resolvedLink);
       setCopied(false);
