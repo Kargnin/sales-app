@@ -1,11 +1,12 @@
-import { Tabs, useSegments } from "expo-router";
+import { Tabs, useRouter, useSegments } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { View, Image, TouchableOpacity } from "react-native";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Text } from "../../src/components/ui/text";
 import { SideMenu } from "../../src/components/layout/SideMenu";
 import { useUIStore } from "../../src/stores/uiStore";
+import { useAuthStore } from "../../src/stores/authStore";
 
 const ACTIVE_COLOR = "#ff3e00";
 const INACTIVE_COLOR = "#848281";
@@ -62,7 +63,11 @@ function GlobalHeader() {
         >
           <Image
             source={mascotPartner}
-            style={{ width: "100%", height: "100%", transform: [{ scale: 1.15 }] }}
+            style={{
+              width: "100%",
+              height: "100%",
+              transform: [{ scale: 1.15 }],
+            }}
             resizeMode="cover"
           />
         </TouchableOpacity>
@@ -89,6 +94,17 @@ function GlobalHeader() {
 
 export default function AdminLayout() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+
+  // Role guard: bounce non-admins (e.g. deep-links into /(admin) screens) to
+  // the salesman home. user is null while hydrating — the root AuthRedirect
+  // handles unauthenticated/loading redirects, so don't act on null.
+  useEffect(() => {
+    if (user && user.role !== "admin") {
+      router.replace("/(salesman)");
+    }
+  }, [user, router]);
 
   return (
     <SideMenu>
@@ -123,7 +139,11 @@ export default function AdminLayout() {
             options={{
               title: "Dashboard",
               tabBarIcon: ({ color, focused }) => (
-                <Ionicons name={focused ? "grid" : "grid-outline"} size={22} color={color} />
+                <Ionicons
+                  name={focused ? "grid" : "grid-outline"}
+                  size={22}
+                  color={color}
+                />
               ),
             }}
           />
@@ -132,7 +152,11 @@ export default function AdminLayout() {
             options={{
               title: "Shops",
               tabBarIcon: ({ color, focused }) => (
-                <Ionicons name={focused ? "storefront" : "storefront-outline"} size={22} color={color} />
+                <Ionicons
+                  name={focused ? "storefront" : "storefront-outline"}
+                  size={22}
+                  color={color}
+                />
               ),
             }}
           />
@@ -141,7 +165,11 @@ export default function AdminLayout() {
             options={{
               title: "Orders",
               tabBarIcon: ({ color, focused }) => (
-                <Ionicons name={focused ? "cart" : "cart-outline"} size={22} color={color} />
+                <Ionicons
+                  name={focused ? "cart" : "cart-outline"}
+                  size={22}
+                  color={color}
+                />
               ),
             }}
           />
@@ -150,7 +178,11 @@ export default function AdminLayout() {
             options={{
               title: "Catalog",
               tabBarIcon: ({ color, focused }) => (
-                <Ionicons name={focused ? "cube" : "cube-outline"} size={22} color={color} />
+                <Ionicons
+                  name={focused ? "cube" : "cube-outline"}
+                  size={22}
+                  color={color}
+                />
               ),
             }}
           />
@@ -159,7 +191,11 @@ export default function AdminLayout() {
             options={{
               title: "Team",
               tabBarIcon: ({ color, focused }) => (
-                <Ionicons name={focused ? "people" : "people-outline"} size={22} color={color} />
+                <Ionicons
+                  name={focused ? "people" : "people-outline"}
+                  size={22}
+                  color={color}
+                />
               ),
             }}
           />
@@ -168,7 +204,15 @@ export default function AdminLayout() {
             options={{
               title: "More",
               tabBarIcon: ({ color, focused }) => (
-                <Ionicons name={focused ? "ellipsis-horizontal-circle" : "ellipsis-horizontal-circle-outline"} size={22} color={color} />
+                <Ionicons
+                  name={
+                    focused
+                      ? "ellipsis-horizontal-circle"
+                      : "ellipsis-horizontal-circle-outline"
+                  }
+                  size={22}
+                  color={color}
+                />
               ),
             }}
           />

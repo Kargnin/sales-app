@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { describeIfDb } from './helpers/dbAvailable.js';
 import request from 'supertest';
-import { app } from '../index.js';
+import { app } from '../app.js';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../db/connection.js';
 import { orders, products, shops } from '../db/schema.js';
@@ -220,6 +220,8 @@ describeIfDb('Shops & GPS Visits Integration', () => {
           longitude: 72.8777,
         });
       pendingShopId2 = shopRes.body.id;
+      expect(shopRes.status).toBe(201);
+      expect(pendingShopId2).toBeDefined();
 
       // Create a rejected shop
       const rejectShopRes = await request(app)
@@ -234,9 +236,12 @@ describeIfDb('Shops & GPS Visits Integration', () => {
           longitude: 72.8777,
         });
       rejectedShopId = rejectShopRes.body.id;
-      await request(app)
+      expect(rejectShopRes.status).toBe(201);
+      expect(rejectedShopId).toBeDefined();
+      const rejectPatchRes = await request(app)
         .patch(`/api/shops/${rejectedShopId}/reject`)
         .set('Authorization', `Bearer ${adminToken}`);
+      expect(rejectPatchRes.status).toBe(200);
 
       // Seed a test product directly in DB for this tenant
       const prodId = uuidv4();

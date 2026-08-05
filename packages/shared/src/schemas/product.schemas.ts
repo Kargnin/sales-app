@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 /** Step 1: Basic Info & Category */
 export const step1BasicInfoSchema = z.object({
-  name: z.string().min(1, "Product name is required").max(255),
+  name: z.string().min(1, 'Product name is required').max(255),
   description: z.string().optional(),
   category: z.string().optional(),
 });
@@ -12,15 +12,15 @@ export type Step1BasicInfoInput = z.infer<typeof step1BasicInfoSchema>;
 
 /** Step 2: Pricing & Media */
 export const step2PricingSchema = z.object({
-  price: z.number().positive("Price must be greater than 0"),
-  unit: z.string().min(1, "Unit is required").max(50),
-  taxRate: z.number().min(0).max(100).default(0),
+  price: z.number().positive('Price must be greater than 0'),
+  unit: z.string().min(1, 'Unit is required').max(50),
   imageUri: z.string().optional(), // client-side URI, server maps to imageUrl
 });
 export type Step2PricingInput = z.infer<typeof step2PricingSchema>;
 
 /** Combined schema matching createProductSchema (all fields from both steps) */
-export const productWizardSchema = step1BasicInfoSchema.merge(step2PricingSchema);
+export const productWizardSchema =
+  step1BasicInfoSchema.merge(step2PricingSchema);
 export type ProductWizardInput = z.infer<typeof productWizardSchema>;
 
 // ─── CRUD schemas (server-side) ────────────────────
@@ -34,7 +34,6 @@ export const createProductSchema = z.object({
   category: z.string().max(100).nullable().optional(),
   description: z.string().nullable().optional(),
   unit: z.string().max(50).nullable().optional(),
-  taxRate: z.number().min(0).max(100).default(0),
 });
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 

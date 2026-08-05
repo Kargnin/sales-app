@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { View, KeyboardAvoidingView, ScrollView, Platform, Image, TouchableOpacity } from "react-native";
+import {
+  View,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  Image,
+  TouchableOpacity,
+} from "react-native";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,7 +15,10 @@ import { Text } from "../../components/ui/text";
 import { Button } from "../../components/ui/button";
 import { FormField } from "../../components/form";
 import { useAuthStore } from "../../stores/authStore";
-import { loginSchema, type LoginFormValues } from "../../lib/validation";
+import {
+  loginSchema,
+  type LoginInput as LoginFormValues,
+} from "@sales-app/shared";
 
 const mascotWelcome = require("../../../assets/mascot_welcome.png");
 
@@ -48,7 +58,11 @@ export function LoginForm() {
     >
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingVertical: 40 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: 24,
+          paddingVertical: 40,
+        }}
         showsVerticalScrollIndicator={false}
         className="relative z-10"
       >
@@ -66,7 +80,16 @@ export function LoginForm() {
                   elevation: 4,
                 }}
               >
-                <Image source={mascotWelcome} className="w-full h-full" style={{ width: "100%", height: "100%", transform: [{ scale: 1.1 }] }} resizeMode="cover" />
+                <Image
+                  source={mascotWelcome}
+                  className="w-full h-full"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    transform: [{ scale: 1.1 }],
+                  }}
+                  resizeMode="cover"
+                />
               </View>
               {/* Heart overlay */}
               <View
@@ -120,7 +143,9 @@ export function LoginForm() {
                   className="p-1"
                   activeOpacity={0.7}
                   accessibilityRole="button"
-                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                  accessibilityLabel={
+                    showPassword ? "Hide password" : "Show password"
+                  }
                 >
                   <Ionicons
                     name={showPassword ? "eye-outline" : "eye-off-outline"}
@@ -133,7 +158,12 @@ export function LoginForm() {
 
             {/* Forgot Password Link */}
             <View className="flex-row justify-end mt-1">
-              <TouchableOpacity onPress={handleForgotPassword} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Forgot password">
+              <TouchableOpacity
+                onPress={handleForgotPassword}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Forgot password"
+              >
                 <Text variant="label-medium" color="ember">
                   Forgot Password?
                 </Text>
@@ -142,7 +172,11 @@ export function LoginForm() {
           </View>
 
           {/* Submit Button */}
-          <Button variant="primary" loading={isSubmitting} onPress={handleSubmit(onSubmit)}>
+          <Button
+            variant="primary"
+            loading={isSubmitting}
+            onPress={handleSubmit(onSubmit)}
+          >
             Sign In
           </Button>
 
@@ -150,8 +184,15 @@ export function LoginForm() {
           <View className="items-center mt-3">
             <Text variant="body" color="ash">
               Don't have an account?{" "}
-              <TouchableOpacity onPress={() => router.push("/signup")} activeOpacity={0.7}>
-                <Text variant="label-medium" color="charcoal" className="underline">
+              <TouchableOpacity
+                onPress={() => router.push("/signup")}
+                activeOpacity={0.7}
+              >
+                <Text
+                  variant="label-medium"
+                  color="charcoal"
+                  className="underline"
+                >
                   Create an account
                 </Text>
               </TouchableOpacity>

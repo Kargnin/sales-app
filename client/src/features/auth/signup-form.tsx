@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { View, KeyboardAvoidingView, ScrollView, Platform, TouchableOpacity, Image } from "react-native";
+import {
+  View,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  TouchableOpacity,
+  Image,
+} from "react-native";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,7 +15,10 @@ import { Text } from "../../components/ui/text";
 import { Button } from "../../components/ui/button";
 import { FormField } from "../../components/form";
 import { useAuthStore } from "../../stores/authStore";
-import { signupSchema, type SignupFormValues } from "../../lib/validation";
+import {
+  registerBusinessSchema as signupSchema,
+  type RegisterBusinessInput as SignupFormValues,
+} from "@sales-app/shared";
 
 const bgBlobLeft = require("../../../assets/bg_blob_left.png");
 const bgBlobRight = require("../../../assets/bg_blob_right.png");
@@ -24,8 +34,14 @@ export function SignupForm() {
     setError,
     formState: { isSubmitting },
   } = useForm<SignupFormValues>({
-    resolver: zodResolver(signupSchema),
-    defaultValues: { businessName: "", username: "", email: "", phone: "", password: "" },
+    resolver: zodResolver(signupSchema as any),
+    defaultValues: {
+      businessName: "",
+      username: "",
+      email: "",
+      phone: "",
+      password: "",
+    },
   });
 
   const onSubmit = async (data: SignupFormValues) => {
@@ -35,7 +51,7 @@ export function SignupForm() {
         data.username,
         data.email || "",
         data.phone || "",
-        data.password
+        data.password,
       );
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Registration failed";
@@ -62,20 +78,32 @@ export function SignupForm() {
         <Image
           source={bgBlobRight}
           className="absolute -bottom-10 -left-10 opacity-[0.35] rounded-full"
-          style={{ width: "60%", height: "60%", transform: [{ rotate: "12deg" }] }}
+          style={{
+            width: "60%",
+            height: "60%",
+            transform: [{ rotate: "12deg" }],
+          }}
           resizeMode="cover"
         />
         <Image
           source={bgBlobLeft}
           className="absolute bottom-50 -right-12 w-40 h-40 md:w-56 md:h-56 opacity-[0.25]"
-          style={{ width: "60%", height: "60%", transform: [{ rotate: "-12deg" }] }}
+          style={{
+            width: "60%",
+            height: "60%",
+            transform: [{ rotate: "-12deg" }],
+          }}
           resizeMode="cover"
         />
       </View>
 
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingVertical: 40 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: 24,
+          paddingVertical: 40,
+        }}
         showsVerticalScrollIndicator={false}
         className="relative z-10"
       >
@@ -157,7 +185,9 @@ export function SignupForm() {
                   className="p-1"
                   activeOpacity={0.7}
                   accessibilityRole="button"
-                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                  accessibilityLabel={
+                    showPassword ? "Hide password" : "Show password"
+                  }
                 >
                   <Ionicons
                     name={showPassword ? "eye-outline" : "eye-off-outline"}
@@ -184,8 +214,15 @@ export function SignupForm() {
           <View className="items-center mt-2">
             <Text variant="body" color="ash">
               Already have an account?{" "}
-              <TouchableOpacity onPress={() => router.push("/login")} activeOpacity={0.7}>
-                <Text variant="label-medium" color="charcoal" className="underline">
+              <TouchableOpacity
+                onPress={() => router.push("/login")}
+                activeOpacity={0.7}
+              >
+                <Text
+                  variant="label-medium"
+                  color="charcoal"
+                  className="underline"
+                >
                   Sign In
                 </Text>
               </TouchableOpacity>

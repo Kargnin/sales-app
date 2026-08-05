@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { describeIfDb } from './helpers/dbAvailable.js';
 import request from 'supertest';
-import { app } from '../index.js';
+import { app } from '../app.js';
 import { v4 as uuidv4 } from 'uuid';
 
 describeIfDb('Admin Product Catalog Management E2E Integration Tests', () => {
@@ -318,7 +318,6 @@ describeIfDb('Admin Product Catalog Management E2E Integration Tests', () => {
           description: 'Pure organic honey from Himalayan farms',
           category: 'Pantry',
           unit: '250g',
-          taxRate: 12,
         });
 
       expect(res.status).toBe(201);
@@ -330,20 +329,6 @@ describeIfDb('Admin Product Catalog Management E2E Integration Tests', () => {
       );
       expect(res.body.category).toBe('Pantry');
       expect(res.body.unit).toBe('250g');
-    });
-
-    it('18. Create product with tax rate accepted', async () => {
-      const res = await request(app)
-        .post('/api/products')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          name: 'Taxed Product',
-          price: 200.0,
-          taxRate: 18,
-        });
-
-      expect(res.status).toBe(201);
-      expect(res.body.id).toBeDefined();
     });
 
     it('19. Create product with only name and price sets sensible defaults', async () => {
@@ -373,32 +358,6 @@ describeIfDb('Admin Product Catalog Management E2E Integration Tests', () => {
 
       expect(res.status).toBe(400);
       expect(res.body.error).toBe('Validation failed');
-    });
-
-    it('21. Validation rejects product with taxRate exceeding 100', async () => {
-      const res = await request(app)
-        .post('/api/products')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          name: 'Excessive Tax',
-          price: 100.0,
-          taxRate: 150,
-        });
-
-      expect(res.status).toBe(400);
-    });
-
-    it('22. Validation rejects product with negative taxRate', async () => {
-      const res = await request(app)
-        .post('/api/products')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({
-          name: 'Negative Tax',
-          price: 100.0,
-          taxRate: -5,
-        });
-
-      expect(res.status).toBe(400);
     });
 
     it('23. Validation rejects product with empty name', async () => {

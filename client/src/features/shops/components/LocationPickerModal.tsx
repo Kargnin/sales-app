@@ -4,6 +4,7 @@ import { Text } from "../../../components/ui/text";
 import { Button } from "../../../components/ui/button";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
+import { useReducedMotion } from "react-native-reanimated";
 import { ShopMapCanvas, type ShopMapCanvasRef } from "./ShopMapCanvas";
 
 interface LocationPickerModalProps {
@@ -29,6 +30,7 @@ export function LocationPickerModal({
   onConfirmLocation,
 }: LocationPickerModalProps) {
   const mapRef = useRef<ShopMapCanvasRef>(null);
+  const reducedMotion = useReducedMotion();
   const [currentLat, setCurrentLat] = useState(initialLat || 19.076);
   const [currentLng, setCurrentLng] = useState(initialLng || 72.8777);
   const [addressPreview, setAddressPreview] = useState(
@@ -134,7 +136,7 @@ export function LocationPickerModal({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={reducedMotion ? "none" : "slide"}
       presentationStyle="fullScreen"
       onRequestClose={onClose}
     >

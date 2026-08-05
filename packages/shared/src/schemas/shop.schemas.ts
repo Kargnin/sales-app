@@ -52,7 +52,8 @@ export const createShopSchema = z.object({
 });
 export type CreateShopInput = z.infer<typeof createShopSchema>;
 
-export const updateShopSchema = createShopSchema.partial().extend({
-  status: z.enum(['approved', 'pending_approval', 'rejected']).optional(),
-});
+// Status changes are NOT allowed via generic update — shop state transitions
+// must go through the dedicated /approve and /reject action endpoints so the
+// order-cancellation cascade and safety invariants are always enforced.
+export const updateShopSchema = createShopSchema.partial();
 export type UpdateShopInput = z.infer<typeof updateShopSchema>;

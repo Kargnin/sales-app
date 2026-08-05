@@ -2,6 +2,7 @@ import { useEffect, useCallback, useState, useRef } from "react";
 import { View, TouchableOpacity, Modal } from "react-native";
 import { Text } from "../components/ui/text";
 import { Button } from "../components/ui/button";
+import { useReducedMotion } from "react-native-reanimated";
 
 /** The event shape emitted by React Navigation's `beforeRemove` listener. */
 interface BeforeRemoveEvent {
@@ -57,6 +58,7 @@ export function useEditGuard({
 }: UseEditGuardOptions) {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const reducedMotion = useReducedMotion();
 
   /**
    * Ref-based storage for the action to run after the user resolves the
@@ -93,13 +95,10 @@ export function useEditGuard({
 
   // ── Show the confirmation modal and enqueue a follow-up action ─────
 
-  const promptUnsavedChanges = useCallback(
-    (afterResolve?: () => void) => {
-      pendingActionRef.current = afterResolve ?? null;
-      setShowConfirmModal(true);
-    },
-    [],
-  );
+  const promptUnsavedChanges = useCallback((afterResolve?: () => void) => {
+    pendingActionRef.current = afterResolve ?? null;
+    setShowConfirmModal(true);
+  }, []);
 
   // ── beforeRemove listener (hardware back / browser back) ───────────
 
@@ -160,7 +159,7 @@ export function useEditGuard({
     <Modal
       visible={showConfirmModal}
       transparent
-      animationType="fade"
+      animationType={reducedMotion ? "none" : "fade"}
       onRequestClose={handleModalKeepEditing}
     >
       <View className="flex-1 bg-midnight/40 items-center justify-center px-4">

@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { View, KeyboardAvoidingView, ScrollView, Platform, TouchableOpacity, ActivityIndicator, Image } from "react-native";
+import {
+  View,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  TouchableOpacity,
+  ActivityIndicator,
+  Image,
+} from "react-native";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,7 +17,12 @@ import { Button } from "../../../src/components/ui/button";
 import { FormField } from "../../../src/components/form";
 import { useAuthStore } from "../../../src/stores/authStore";
 import { apiClient } from "../../../src/lib/apiClient";
-import { inviteAcceptSchema, type InviteAcceptFormValues } from "../../../src/lib/validation";
+import { registerSalesmanSchema } from "@sales-app/shared";
+import { z } from "zod";
+
+// Derived from the shared schema: `token` comes from route params, not the form.
+const inviteAcceptSchema = registerSalesmanSchema.omit({ token: true });
+type InviteAcceptFormValues = z.infer<typeof inviteAcceptSchema>;
 
 const bgBlobLeft = require("../../../assets/bg_blob_left.png");
 const bgBlobRight = require("../../../assets/bg_blob_right.png");
@@ -34,7 +47,7 @@ export default function InviteAcceptScreen() {
     setError,
     formState: { isSubmitting },
   } = useForm<InviteAcceptFormValues>({
-    resolver: zodResolver(inviteAcceptSchema),
+    resolver: zodResolver(inviteAcceptSchema as any),
     defaultValues: { username: "", password: "", email: "", phone: "" },
   });
 
@@ -43,16 +56,20 @@ export default function InviteAcceptScreen() {
       try {
         setIsVerifying(true);
         setVerifyError(null);
-        const res = await apiClient<{ tenantId: string; tenantName: string; role: string }>(
-          "/auth/verify-invite",
-          {
-            method: "POST",
-            body: { token },
-          }
-        );
+        const res = await apiClient<{
+          tenantId: string;
+          tenantName: string;
+          role: string;
+        }>("/auth/verify-invite", {
+          method: "POST",
+          body: { token },
+        });
         setInviteDetails(res);
       } catch (e: unknown) {
-        const message = e instanceof Error ? e.message : "Invalid or expired invitation token";
+        const message =
+          e instanceof Error
+            ? e.message
+            : "Invalid or expired invitation token";
         setVerifyError(message);
       } finally {
         setIsVerifying(false);
@@ -72,7 +89,7 @@ export default function InviteAcceptScreen() {
         data.username,
         data.password,
         data.email || "",
-        data.phone || ""
+        data.phone || "",
       );
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Registration failed";
@@ -117,7 +134,8 @@ export default function InviteAcceptScreen() {
               Invalid Invitation
             </Text>
             <Text variant="body" color="ash" className="text-center">
-              {verifyError || "This invitation token is invalid or has expired."}
+              {verifyError ||
+                "This invitation token is invalid or has expired."}
             </Text>
           </View>
 
@@ -158,7 +176,11 @@ export default function InviteAcceptScreen() {
 
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingVertical: 40 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: 24,
+          paddingVertical: 40,
+        }}
         showsVerticalScrollIndicator={false}
         className="relative z-10"
       >
@@ -245,7 +267,9 @@ export default function InviteAcceptScreen() {
                   className="p-1"
                   activeOpacity={0.7}
                   accessibilityRole="button"
-                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                  accessibilityLabel={
+                    showPassword ? "Hide password" : "Show password"
+                  }
                 >
                   <Ionicons
                     name={showPassword ? "eye-outline" : "eye-off-outline"}
@@ -272,8 +296,15 @@ export default function InviteAcceptScreen() {
           <View className="items-center mt-2">
             <Text variant="body" color="ash">
               Already have an account?{" "}
-              <TouchableOpacity onPress={() => router.push("/login")} activeOpacity={0.7}>
-                <Text variant="label-medium" color="charcoal" className="underline">
+              <TouchableOpacity
+                onPress={() => router.push("/login")}
+                activeOpacity={0.7}
+              >
+                <Text
+                  variant="label-medium"
+                  color="charcoal"
+                  className="underline"
+                >
                   Sign In
                 </Text>
               </TouchableOpacity>

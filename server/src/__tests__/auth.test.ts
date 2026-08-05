@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { describeIfDb } from './helpers/dbAvailable.js';
 import request from 'supertest';
-import { app } from '../index.js';
+import { app } from '../app.js';
 import { v4 as uuidv4 } from 'uuid';
 
 describeIfDb('Auth, RBAC & Multi-Tenancy Integration', () => {
@@ -209,5 +209,97 @@ describeIfDb('Auth, RBAC & Multi-Tenancy Integration', () => {
 
     expect(reactivateRes.status).toBe(200);
     expect(reactivateRes.body.status).toBe('active');
+  });
+});
+
+describeIfDb('Session Revocation (Logout & tokenVersion)', () => {
+  const unique = Date.now().toString(36);
+  const password = 'password123';
+
+  it('1. Logout revokes the token family — old refresh AND access tokens are rejected', async () => {
+    const regRes = await request(app)
+      .post('/auth/register')
+      .send({
+        businessName: `Revoke Co ${unique}`,
+        username: `revoke_${unique}`,
+        password,
+        email: `revoke${unique}@example.com`,
+        phone: '9876543212',
+      });
+    expect(regRes.status).toBe(201);
+    const refreshToken = regRes.body.refreshToken;
+    const accessToken = regRes.body.accessToken;
+
+    // Refresh works before logout
+    const refreshBefore = await request(app)
+      .post('/auth/refresh')
+      .send({ refreshToken });
+    expect(refreshBefore.status).toBe(200);
+    expect(refreshBefore.body.accessToken).toBeDefined();
+
+    // Server-side logout
+    const logoutRes = await request(app)
+      .post('/auth/logout')
+      .send({ refreshToken });
+    expect(logoutRes.status).toBe(200);
+
+    // Old refresh token must now be rejected (tokenVersion bumped)
+    const refreshAfter = await request(app)
+      .post('/auth/refresh')
+      .send({ refreshToken });
+    expect(refreshAfter.status).toBe(401);
+
+    // Old access token must also be rejected
+    const meRes = await request(app)
+      .get('/api/users/me')
+      .set('Authorization', `Bearer ${accessToken}`);
+    expect(meRes.status).toBe(401);
+  });
+
+  it('2. Logout is idempotent — a second logout with the same token still succeeds', async () => {
+    const regRes = await request(app)
+      .post('/auth/register')
+      .send({
+        businessName: `Revoke2 Co ${unique}`,
+        username: `revoke2_${unique}`,
+        password,
+        email: `revoke2${unique}@example.com`,
+        phone: '9876543213',
+      });
+    const refreshToken = regRes.body.refreshToken;
+
+    const first = await request(app)
+      .post('/auth/logout')
+      .send({ refreshToken });
+    expect(first.status).toBe(200);
+    const second = await request(app)
+      .post('/auth/logout')
+      .send({ refreshToken });
+    expect(second.status).toBe(200);
+  });
+
+  it('3. Password change revokes previously issued refresh tokens', async () => {
+    const regRes = await request(app)
+      .post('/auth/register')
+      .send({
+        businessName: `Revoke3 Co ${unique}`,
+        username: `revoke3_${unique}`,
+        password,
+        email: `revoke3${unique}@example.com`,
+        phone: '9876543214',
+      });
+    const refreshToken = regRes.body.refreshToken;
+    const accessToken = regRes.body.accessToken;
+
+    const patchRes = await request(app)
+      .patch('/api/users/me')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ currentPassword: password, newPassword: 'newpassword456' });
+    expect(patchRes.status).toBe(200);
+
+    const refreshAfter = await request(app)
+      .post('/auth/refresh')
+      .send({ refreshToken });
+    expect(refreshAfter.status).toBe(401);
   });
 });
