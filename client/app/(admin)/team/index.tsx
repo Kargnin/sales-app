@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { View, ScrollView, TouchableOpacity, ActivityIndicator, Clipboard, Alert } from "react-native";
+import {
+  View,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Clipboard,
+  Alert,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Text } from "../../../src/components/ui/text";
 import { Button } from "../../../src/components/ui/button";
@@ -32,15 +39,21 @@ export default function TeamScreen() {
   const handleGenerateInvite = async () => {
     try {
       setIsGenerating(true);
-      const res = await apiClient<{ inviteToken: string }>("/api/users/generate-invite", {
-        method: "POST",
-      });
+      const res = await apiClient<{ inviteToken: string }>(
+        "/api/users/generate-invite",
+        {
+          method: "POST",
+        },
+      );
       // Build link targeting our public acceptance route
-      const resolvedLink = `http://localhost:8081/invite/${res.inviteToken}`;
+      const inviteBaseUrl =
+        process.env.EXPO_PUBLIC_INVITE_BASE_URL ?? "salesapp://";
+      const resolvedLink = `${inviteBaseUrl}/invite/${res.inviteToken}`;
       setInviteLink(resolvedLink);
       setCopied(false);
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Failed to generate invite token";
+      const message =
+        e instanceof Error ? e.message : "Failed to generate invite token";
       Alert.alert("Error", message);
     } finally {
       setIsGenerating(false);
@@ -117,7 +130,9 @@ export default function TeamScreen() {
                 <TouchableOpacity
                   onPress={handleCopyLink}
                   className={`px-3 py-1.5 rounded-lg flex-row items-center gap-1.5 ${
-                    copied ? "bg-success/15 border border-success/30" : "bg-midnight"
+                    copied
+                      ? "bg-success/15 border border-success/30"
+                      : "bg-midnight"
                   }`}
                   activeOpacity={0.7}
                 >
@@ -126,7 +141,10 @@ export default function TeamScreen() {
                     size={14}
                     color={copied ? "#00ca48" : "#ffffff"}
                   />
-                  <Text variant="caption" color={copied ? "success" : "surface"}>
+                  <Text
+                    variant="caption"
+                    color={copied ? "success" : "surface"}
+                  >
                     {copied ? "Copied" : "Copy"}
                   </Text>
                 </TouchableOpacity>
@@ -190,7 +208,9 @@ export default function TeamScreen() {
                         {member.username}
                       </Text>
                       <Text variant="caption" color="ash">
-                        {member.role === "admin" ? "Administrator" : "Sales Representative"}
+                        {member.role === "admin"
+                          ? "Administrator"
+                          : "Sales Representative"}
                       </Text>
                     </View>
                   </View>
