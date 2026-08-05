@@ -14,6 +14,7 @@ import MapView, {
   type LatLng,
 } from "react-native-maps";
 import * as Location from "expo-location";
+import { useReducedMotion } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import type { Shop } from "../../../types";
 
@@ -128,6 +129,7 @@ export const ShopMapCanvas = forwardRef<ShopMapCanvasRef, ShopMapCanvasProps>(
     ref,
   ) => {
     const mapRef = useRef<MapView>(null);
+    const reducedMotion = useReducedMotion();
     const [isLocating, setIsLocating] = useState(false);
     const currentZoomRef = useRef(14);
     const visibleRegionRef = useRef<Region | null>(null);
@@ -180,23 +182,27 @@ export const ShopMapCanvas = forwardRef<ShopMapCanvasRef, ShopMapCanvasProps>(
       };
     }, [shopsWithCoords, defaultCenterLat, defaultCenterLng]);
 
-    useImperativeHandle(ref, () => ({
-      centerOnShop: (lat: number, lng: number) => {
-        mapRef.current?.animateCamera(
-          { center: { latitude: lat, longitude: lng } },
-          { duration: 400 },
-        );
-      },
-    }));
+    useImperativeHandle(
+      ref,
+      () => ({
+        centerOnShop: (lat: number, lng: number) => {
+          mapRef.current?.animateCamera(
+            { center: { latitude: lat, longitude: lng } },
+            { duration: reducedMotion ? 0 : 400 },
+          );
+        },
+      }),
+      [reducedMotion],
+    );
 
     const fitAllCoords = useCallback(() => {
       if (allCoords.length > 0) {
         mapRef.current?.fitToCoordinates(allCoords, {
           edgePadding: { top: 60, right: 60, bottom: 120, left: 60 },
-          animated: true,
+          animated: !reducedMotion,
         });
       }
-    }, [allCoords]);
+    }, [allCoords, reducedMotion]);
 
     const hasInitializedCameraRef = useRef(false);
 
@@ -211,11 +217,11 @@ export const ShopMapCanvas = forwardRef<ShopMapCanvasRef, ShopMapCanvasProps>(
       (shop: { _lat: number; _lng: number; id: string }) => {
         mapRef.current?.animateCamera(
           { center: { latitude: shop._lat, longitude: shop._lng } },
-          { duration: 400 },
+          { duration: reducedMotion ? 0 : 400 },
         );
         onSelectShopFromMap(shop.id);
       },
-      [onSelectShopFromMap],
+      [onSelectShopFromMap, reducedMotion],
     );
 
     const handleNearMe = useCallback(async () => {
@@ -235,14 +241,14 @@ export const ShopMapCanvas = forwardRef<ShopMapCanvasRef, ShopMapCanvasProps>(
             },
             zoom: targetZoom,
           },
-          { duration: 500 },
+          { duration: reducedMotion ? 0 : 500 },
         );
       } catch {
         // silently fail
       } finally {
         setIsLocating(false);
       }
-    }, []);
+    }, [reducedMotion]);
 
     const handleRegionChangeComplete = useCallback(
       (region: Region) => {

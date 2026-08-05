@@ -23,6 +23,7 @@ import {
   router,
 } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useReducedMotion } from "react-native-reanimated";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm, FormProvider, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -380,6 +381,7 @@ function EditForm({
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
+  const reducedMotion = useReducedMotion();
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const { data: product, isLoading, isError, refetch } = useProduct(id);
@@ -590,7 +592,7 @@ export default function ProductDetailScreen() {
       <Modal
         visible={showDeleteModal}
         transparent
-        animationType="fade"
+        animationType={reducedMotion ? "none" : "fade"}
         onRequestClose={() => setShowDeleteModal(false)}
       >
         <View className="flex-1 bg-midnight/40 items-center justify-center px-4">
