@@ -24,6 +24,7 @@ import {
   router,
 } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useReducedMotion } from "react-native-reanimated";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useForm,
@@ -446,6 +447,7 @@ function EditShopForm({
 export default function ShopDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
+  const reducedMotion = useReducedMotion();
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const { data: shop, isLoading, isError, refetch } = useShop(id);
@@ -852,7 +854,7 @@ export default function ShopDetailScreen() {
       <Modal
         visible={showDeleteModal}
         transparent
-        animationType="fade"
+        animationType={reducedMotion ? "none" : "fade"}
         onRequestClose={() => setShowDeleteModal(false)}
       >
         <View className="flex-1 bg-midnight/50 items-center justify-center px-4">

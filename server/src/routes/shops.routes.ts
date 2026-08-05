@@ -297,7 +297,6 @@ router.patch(
         additionalOwners,
         latitude,
         longitude,
-        status,
       } = req.body;
 
       await db
@@ -312,7 +311,6 @@ router.patch(
             additionalOwners !== undefined ? additionalOwners : undefined,
           latitude: latitude !== undefined ? String(latitude) : undefined,
           longitude: longitude !== undefined ? String(longitude) : undefined,
-          status: status !== undefined ? status : undefined,
         })
         .where(eq(shops.id, id));
 

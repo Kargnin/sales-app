@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
+import { ReduceMotion, useReducedMotion } from "react-native-reanimated";
 import { Text } from "../../../components/ui/text";
 import { ShopBottomSheetItem } from "./ShopBottomSheetItem";
 import type { Shop } from "../../../types";
@@ -32,6 +33,7 @@ export const ShopBottomSheetDrawer = forwardRef<
     ref,
   ) => {
     const insets = useSafeAreaInsets();
+    const reducedMotion = useReducedMotion();
     const snapPoints = useMemo(() => ["22%", "45%", "85%"], []);
 
     const renderItem = useCallback(
@@ -71,6 +73,9 @@ export const ShopBottomSheetDrawer = forwardRef<
           shadowRadius: 10,
           elevation: 12,
         }}
+        overrideReduceMotion={
+          reducedMotion ? ReduceMotion.Always : ReduceMotion.Never
+        }
       >
         <View testID={testID} className="flex-1">
           {/* Drawer Header Summary */}

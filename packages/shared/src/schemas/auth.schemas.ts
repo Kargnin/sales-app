@@ -3,11 +3,30 @@ import { z } from 'zod';
 const emptyToUndefined = (val: unknown) => (val === '' ? undefined : val);
 
 export const registerBusinessSchema = z.object({
-  businessName: z.string().min(2, { message: 'Business name must be at least 2 characters' }).max(255),
-  username: z.string().min(3, { message: 'Username must be at least 3 characters' }).max(100),
-  email: z.preprocess(emptyToUndefined, z.string().email({ message: 'Invalid email address' }).optional()),
-  phone: z.preprocess(emptyToUndefined, z.string().min(10, { message: 'Phone number must be at least 10 digits' }).max(20, { message: 'Phone number cannot exceed 20 digits' }).optional()),
-  password: z.string().min(8, { message: 'Password must be at least 8 characters' }).max(128),
+  businessName: z
+    .string()
+    .min(2, { message: 'Business name must be at least 2 characters' })
+    .max(255),
+  username: z
+    .string()
+    .min(3, { message: 'Username must be at least 3 characters' })
+    .max(100),
+  email: z.preprocess(
+    emptyToUndefined,
+    z.string().email({ message: 'Invalid email address' }).optional(),
+  ),
+  phone: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .min(10, { message: 'Phone number must be at least 10 digits' })
+      .max(20, { message: 'Phone number cannot exceed 20 digits' })
+      .optional(),
+  ),
+  password: z
+    .string()
+    .min(8, { message: 'Password must be at least 8 characters' })
+    .max(128),
 });
 export type RegisterBusinessInput = z.infer<typeof registerBusinessSchema>;
 
@@ -18,11 +37,56 @@ export const loginSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export const createEmployeeSchema = z.object({
-  username: z.string().min(3, { message: 'Username must be at least 3 characters' }).max(100),
-  email: z.preprocess(emptyToUndefined, z.string().email({ message: 'Invalid email address' }).optional()),
-  phone: z.preprocess(emptyToUndefined, z.string().min(10, { message: 'Phone number must be at least 10 digits' }).max(20, { message: 'Phone number cannot exceed 20 digits' }).optional()),
-  password: z.string().min(8, { message: 'Password must be at least 8 characters' }).max(128),
+  username: z
+    .string()
+    .min(3, { message: 'Username must be at least 3 characters' })
+    .max(100),
+  email: z.preprocess(
+    emptyToUndefined,
+    z.string().email({ message: 'Invalid email address' }).optional(),
+  ),
+  phone: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .min(10, { message: 'Phone number must be at least 10 digits' })
+      .max(20, { message: 'Phone number cannot exceed 20 digits' })
+      .optional(),
+  ),
+  password: z
+    .string()
+    .min(8, { message: 'Password must be at least 8 characters' })
+    .max(128),
   role: z.enum(['salesman', 'admin']).default('salesman'),
 });
 export type CreateEmployeeInput = z.infer<typeof createEmployeeSchema>;
 
+export const registerSalesmanSchema = z.object({
+  token: z.string().min(1, { message: 'Invite token is required' }),
+  username: z
+    .string()
+    .min(3, { message: 'Username must be at least 3 characters' })
+    .max(100),
+  email: z.preprocess(
+    emptyToUndefined,
+    z.string().email({ message: 'Invalid email address' }).optional(),
+  ),
+  phone: z.preprocess(
+    emptyToUndefined,
+    z
+      .string()
+      .min(10, { message: 'Phone number must be at least 10 digits' })
+      .max(20, { message: 'Phone number cannot exceed 20 digits' })
+      .optional(),
+  ),
+  password: z
+    .string()
+    .min(8, { message: 'Password must be at least 8 characters' })
+    .max(128),
+});
+export type RegisterSalesmanInput = z.infer<typeof registerSalesmanSchema>;
+
+export const resetPasswordSchema = z.object({
+  email: z.string().email({ message: 'Enter a valid email address' }),
+});
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

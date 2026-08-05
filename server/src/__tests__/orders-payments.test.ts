@@ -795,5 +795,78 @@ describeIfDb(
         expect(res.body.error).toBe('Validation failed');
       });
     });
+
+    // ─── 6. Cancellation Token Not Exposed (regression) ──────────────
+    describe('Cancellation Token Not Exposed Outside Creation', () => {
+      let orderId: string;
+      let plainToken: string;
+
+      beforeAll(async () => {
+        const res = await request(app)
+          .post('/api/orders')
+          .set('Authorization', `Bearer ${salesmanToken}`)
+          .send({
+            shopId: approvedShopId,
+            items: [
+              { productId: testProduct1Id, quantity: 1, unitPrice: 25.0 },
+            ],
+          });
+        expect(res.status).toBe(201);
+        orderId = res.body.id;
+        plainToken = res.body.cancellationToken;
+        expect(plainToken).toBeDefined();
+      });
+
+      it('1. order list does not expose the cancellation token', async () => {
+        const res = await request(app)
+          .get('/api/orders')
+          .set('Authorization', `Bearer ${salesmanToken}`);
+        expect(res.status).toBe(200);
+        const order = res.body.find((o: any) => o.id === orderId);
+        expect(order).toBeDefined();
+        expect(order.cancellationToken).toBeUndefined();
+      });
+
+      it('2. order detail does not expose the cancellation token', async () => {
+        const res = await request(app)
+          .get(`/api/orders/${orderId}`)
+          .set('Authorization', `Bearer ${salesmanToken}`);
+        expect(res.status).toBe(200);
+        expect(res.body.cancellationToken).toBeUndefined();
+      });
+
+      it('3. payment response does not expose the cancellation token', async () => {
+        const res = await request(app)
+          .post(`/api/orders/${orderId}/payments`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ amountPaid: 10.0, paymentMethod: 'cash' });
+        expect(res.status).toBe(201);
+        expect(res.body.cancellationToken).toBeUndefined();
+      });
+
+      it('4. public invoice exposes no internal ids or token, but plaintext token still cancels', async () => {
+        const invoice = await request(app).get(
+          `/api/orders/public/${plainToken}`,
+        );
+        expect(invoice.status).toBe(200);
+        expect(invoice.body.cancellationToken).toBeUndefined();
+        expect(invoice.body.tenantId).toBeUndefined();
+        expect(invoice.body.salesmanId).toBeUndefined();
+
+        const cancel = await request(app)
+          .post('/api/orders/public/cancel')
+          .send({ token: plainToken });
+        expect(cancel.status).toBe(200);
+      });
+
+      it('5. hashed-at-rest: DB stores a SHA-256 hash, not the plaintext token', async () => {
+        const row = await db.query.orders.findFirst({
+          where: eq(orders.id, orderId),
+          columns: { cancellationToken: true },
+        });
+        expect(row?.cancellationToken).toMatch(/^[a-f0-9]{64}$/);
+        expect(row?.cancellationToken).not.toBe(plainToken);
+      });
+    });
   },
 );

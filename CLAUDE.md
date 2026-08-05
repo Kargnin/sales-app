@@ -1,3 +1,9 @@
+# Sales App — Development Guide
+
+> **⚠️ Read `GOTCHAS.md` first** — it contains known pitfalls, audit findings, and
+> security issues that must not be repeated. Any agent doing feature work must
+> consult it before writing code.
+
 After any code changes:
 
 1. Make sure there are no typescript compilation errors

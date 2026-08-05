@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { Text } from "../ui/text";
 import { Button } from "../ui/button";
+import { useReducedMotion } from "react-native-reanimated";
 
 interface ImageUploaderProps {
   imageUri: string | null;
@@ -17,6 +18,7 @@ export function ImageUploader({
   onImageRemoved,
 }: ImageUploaderProps) {
   const [showOptionsModal, setShowOptionsModal] = useState(false);
+  const reducedMotion = useReducedMotion();
 
   const handleLaunchCamera = useCallback(async () => {
     try {
@@ -42,13 +44,17 @@ export function ImageUploader({
         setShowOptionsModal(false);
       }
     } catch {
-      Alert.alert("Error", "Something went wrong while opening the camera. Please try again.");
+      Alert.alert(
+        "Error",
+        "Something went wrong while opening the camera. Please try again.",
+      );
     }
   }, [onImageSelected]);
 
   const handleLaunchLibrary = useCallback(async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
 
       if (status !== "granted") {
         Alert.alert(
@@ -70,7 +76,10 @@ export function ImageUploader({
         setShowOptionsModal(false);
       }
     } catch {
-      Alert.alert("Error", "Something went wrong while selecting the image. Please try again.");
+      Alert.alert(
+        "Error",
+        "Something went wrong while selecting the image. Please try again.",
+      );
     }
   }, [onImageSelected]);
 
@@ -128,16 +137,25 @@ export function ImageUploader({
       <Modal
         visible={showOptionsModal}
         transparent
-        animationType="fade"
+        animationType={reducedMotion ? "none" : "fade"}
         onRequestClose={() => setShowOptionsModal(false)}
       >
         <View className="flex-1 bg-midnight/40 items-center justify-center px-4">
           <View className="bg-canvas border border-stone-border rounded-2xl p-6 w-full max-w-[340px] gap-4 shadow-xl">
-            <Text variant="heading-sm" color="charcoal" className="text-center mt-1">
+            <Text
+              variant="heading-sm"
+              color="charcoal"
+              className="text-center mt-1"
+            >
               Upload Image
             </Text>
-            <Text variant="body" color="graphite" className="text-center leading-5 mb-2">
-              Would you like to take a photo using your camera or choose an existing photo?
+            <Text
+              variant="body"
+              color="graphite"
+              className="text-center leading-5 mb-2"
+            >
+              Would you like to take a photo using your camera or choose an
+              existing photo?
             </Text>
 
             <View className="gap-3">

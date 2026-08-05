@@ -57,9 +57,6 @@ export interface Product {
   category: string | null;
   description: string | null;
   unit: string | null;
-  weight: string | null;
-  dimensions: string | null;
-  material: string | null;
   stockStatus: "in_stock" | "low_stock" | "out_of_stock";
   createdAt: string;
 }
