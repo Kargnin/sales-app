@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { View, KeyboardAvoidingView, ScrollView, Platform, Image, TouchableOpacity } from "react-native";
+import {
+  View,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
+  Image,
+  TouchableOpacity,
+} from "react-native";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,7 +15,10 @@ import { Text } from "../../components/ui/text";
 import { Button } from "../../components/ui/button";
 import { FormField } from "../../components/form";
 import { useAuthStore } from "../../stores/authStore";
-import { resetPasswordSchema, type ResetPasswordFormValues } from "../../lib/validation";
+import {
+  resetPasswordSchema,
+  type ResetPasswordInput as ResetPasswordFormValues,
+} from "@sales-app/shared";
 
 const mascotEnvelope = require("../../../assets/mascot_envelope.png");
 
@@ -32,7 +42,10 @@ export function ResetPasswordForm() {
       await resetPassword(data.email);
       setIsSuccess(true);
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Failed to request password reset link";
+      const message =
+        e instanceof Error
+          ? e.message
+          : "Failed to request password reset link";
       setError("email", { message });
     }
   };
@@ -56,7 +69,11 @@ export function ResetPasswordForm() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingBottom: 40 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingHorizontal: 24,
+          paddingBottom: 40,
+        }}
         showsVerticalScrollIndicator={false}
         className="relative z-10"
       >
@@ -79,7 +96,11 @@ export function ResetPasswordForm() {
                     <Image
                       source={mascotEnvelope}
                       className="w-full h-full"
-                      style={{ width: "100%", height: "100%", transform: [{ scale: 1.1 }] }}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        transform: [{ scale: 1.1 }],
+                      }}
                       resizeMode="cover"
                     />
                   </View>
@@ -101,7 +122,11 @@ export function ResetPasswordForm() {
 
               {/* Title Header */}
               <View className="items-center gap-1">
-                <Text variant="display" color="charcoal" className="text-center">
+                <Text
+                  variant="display"
+                  color="charcoal"
+                  className="text-center"
+                >
                   Reset Password
                 </Text>
                 <Text variant="body" color="ash" className="text-center">
@@ -159,7 +184,11 @@ export function ResetPasswordForm() {
               </View>
 
               <View className="items-center gap-2">
-                <Text variant="heading-sm" color="charcoal" className="text-center">
+                <Text
+                  variant="heading-sm"
+                  color="charcoal"
+                  className="text-center"
+                >
                   Link Sent!
                 </Text>
                 <Text variant="body" color="ash" className="text-center">

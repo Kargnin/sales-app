@@ -38,12 +38,16 @@ import { useProduct } from "../../../src/hooks/queries/useProduct";
 import { StockBadge, ProductSpecsTable } from "../../../src/features/products";
 import { useAuthStore } from "../../../src/stores/authStore";
 import { apiClient } from "../../../src/lib/apiClient";
-import {
-  productEditSchema,
-  type ProductEditFormValues,
-} from "../../../src/lib/validation";
+import { updateProductSchema } from "@sales-app/shared";
+import { z } from "zod";
 import { useEditGuard } from "../../../src/hooks/useEditGuard";
 import { formatCurrency } from "../../../src/lib/format";
+
+// Derived from the shared partial CRUD schema; imageUri is the client-only wizard field name.
+const productEditSchema = updateProductSchema.extend({
+  imageUri: z.string().nullable().optional(),
+});
+type ProductEditFormValues = z.infer<typeof productEditSchema>;
 
 const UNIT_OPTIONS = [
   { label: "kg", value: "kg" },
@@ -149,7 +153,7 @@ function EditForm({
         await apiClient(`/api/products/${product.id}`, {
           method: "PATCH",
           body: {
-            name: data.name.trim(),
+            name: data.name?.trim() || "",
             description: data.description?.trim() || null,
             price: data.price,
             stockQuantity: data.stockQuantity,
