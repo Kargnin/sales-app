@@ -50,7 +50,3 @@ Stitch project ID: 2048573934882273867
 - Server integration tests need MySQL. The project's DB container is `mysql-local` — start it (do NOT create a new one) before running server tests:
   `docker start mysql-local`
 - When MySQL is unreachable the DB integration suites skip cleanly and the run prints the start command (see `server/src/__tests__/helpers/dbAvailable.ts`). CI always starts its own MySQL service, so nothing is skipped there.
-
-## Branch Policy (main)
-
-- **No direct pushes to `main`** — enforced by the `.husky/pre-push` hook. All changes land via a pull request with all three CI jobs green (Client / Server / Shared). To bypass the hook intentionally (e.g. emergency hotfix): `git push --no-verify`.
