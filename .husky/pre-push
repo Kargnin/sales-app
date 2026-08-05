@@ -1,0 +1,27 @@
+#!/bin/sh
+# Blocks direct pushes to main — all changes must land via a PR with green CI.
+# (Server-side branch protection also needs GitHub Pro for private repos;
+# this hook gives the same protection on every machine that has hooks installed.)
+
+protected_branch="refs/heads/main"
+
+block() {
+  echo "⛔ Direct push to 'main' blocked by pre-push hook."
+  echo "   All changes to main must go through a pull request with all CI checks green."
+  echo ""
+  echo "   Instead:"
+  echo "     git checkout -b feat/your-change"
+  echo "     git push -u origin HEAD"
+  echo "     gh pr create --base main"
+  exit 1
+}
+
+# Pre-push hook stdin: "<local ref> <local oid> <remote ref> <remote oid>" per ref
+while read local_ref local_oid remote_ref remote_oid; do
+  [ -z "$remote_ref" ] && continue
+  if [ "$remote_ref" = "$protected_branch" ]; then
+    block
+  fi
+done
+
+exit 0
