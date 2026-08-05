@@ -5,6 +5,9 @@
 @import "nativewind/theme";
 
 @theme {
+  --radius-10: 10px;
+  --radius-pill: 9999px;
+  --color-primary: #121212;
   --color-canvas: #fbfaf9;
   --color-surface: #ffffff;
   --color-surface-recessed: #f8f7f4;
@@ -22,6 +25,9 @@
 }
 
 :root {
+  --radius-10: 10px;
+  --radius-pill: 9999px;
+  --color-primary: #121212;
   --color-canvas: #fbfaf9;
   --color-surface: #ffffff;
   --color-surface-recessed: #f8f7f4;
