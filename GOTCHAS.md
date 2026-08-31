@@ -341,6 +341,14 @@ Severity: **SEV-1** = must fix (vulnerability / correctness / data-loss), **SEV-
 - 7. Stale token in zustand after refresh — `client/src/lib/apiClient.ts:100-101` writes new tokens to SecureStore only; `authStore.token` keeps the old value.
 - 8. Hardcoded fallback identity in SideMenu — `client/src/components/layout/SideMenu.tsx:74, 76` (`user?.username || "Michael Chen"`, `role = user?.role || "admin"`) silently masks missing user state and grants admin menu.
 
+### [SEV-3] Don't chase the Android startup warning "Can't perform a React state update on a component that hasn't mounted yet" into app code — it's an expo-router 56.x internal bug, patched via patch-package **[FIXED: patches/expo-router+56.2.15.patch]**
+
+- **Area:** Client
+- **File:** `node_modules/expo-router/build/fork/useLinking.native.js:127,133` (patched); app code is NOT involved
+- **Issue:** On every Android dev cold start, React 19 logs this warning right after `Running "main"`. LogBox component stack points at expo-router's `ContextNavigator`, call stack at `url.then` → `onUnhandledLinking` in the forked `useLinking.native.js`. Mechanism: react-navigation's `useThenable` starts the `getInitialState()` promise in a `useState` initializer (render-phase side effect); on Android expo-router's `getInitialURL()` always resolves to a string (root-URL fallback `salesapp:///` when there is no deep link), so the `.then` always calls `onUnhandledLinking("")` → `setLastUnhandledLink` — and on a dev cold start the promise wins the race against the navigator's first commit (the whole route graph executes inside its initial time-sliced render). Nothing in `app/` has even rendered at that point, so no change to `_layout.tsx`/`index.tsx`/`authStore` can fix it. Dev-only warning (React DEV build); no production impact. Still unfixed upstream as of expo-router 56.2.20 (diffed the forked files against 56.2.15 — identical).
+- **Best practice violated:** N/A (upstream bug); for us: verify with the LogBox component/call stack before assuming app code is at fault.
+- **Fix:** `patches/expo-router+56.2.15.patch` (applied by the root `postinstall` via patch-package) guards both `onUnhandledLinking` call sites in `getInitialState` to skip the empty root-fallback path — a normal launch is not an "unhandled link". Real deep-link paths (e.g. `shops/123`) are still recorded. If expo-router is upgraded, re-check whether upstream fixed this and regenerate or drop the patch (`npx patch-package expo-router`).
+
 ---
 
 ## Frontend / UI

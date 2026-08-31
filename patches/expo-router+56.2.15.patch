@@ -1,0 +1,34 @@
+diff --git a/node_modules/expo-router/build/fork/useLinking.native.js b/node_modules/expo-router/build/fork/useLinking.native.js
+index c080a58..3c581f6 100644
+--- a/node_modules/expo-router/build/fork/useLinking.native.js
++++ b/node_modules/expo-router/build/fork/useLinking.native.js
+@@ -124,13 +124,27 @@ function useLinking(ref, { enabled = true, prefixes, filter, config, getInitialU
+                         const state = getStateFromURL(url);
+                         if (typeof url === 'string') {
+                             // If the link were handled, it gets cleared in NavigationContainer
+-                            onUnhandledLinking((0, extractPathFromURL_1.extractExpoPathFromURL)(prefixes, url));
++                            // PATCH(sales-app): getInitialURL falls back to the root URL on every
++                            // cold start that has no deep link, and its extracted path is "".
++                            // Recording "" as an unhandled link is a state update on the
++                            // not-yet-mounted NavigationContainer (this promise resolves before
++                            // the initial commit), which React 19 flags with "Can't perform a
++                            // React state update on a component that hasn't mounted yet".
++                            // Only track real (non-empty) deep-link paths.
++                            const unhandledPath = (0, extractPathFromURL_1.extractExpoPathFromURL)(prefixes, url);
++                            if (unhandledPath) {
++                                onUnhandledLinking(unhandledPath);
++                            }
+                         }
+                         return state;
+                     });
+                 }
+                 else {
+-                    onUnhandledLinking((0, extractPathFromURL_1.extractExpoPathFromURL)(prefixes, url));
++                    // PATCH(sales-app): same guard as the async branch above.
++                    const unhandledPath = (0, extractPathFromURL_1.extractExpoPathFromURL)(prefixes, url);
++                    if (unhandledPath) {
++                        onUnhandledLinking(unhandledPath);
++                    }
+                 }
+             }
+             state = getStateFromURL(url);
