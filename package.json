@@ -21,11 +21,13 @@
     "db:push": "npm run db:push --workspace=server",
     "db:seed": "npm run db:seed --workspace=server",
     "lint": "npm run lint --workspaces --if-present",
+    "postinstall": "patch-package",
     "prepare": "husky"
   },
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^16.0.0",
+    "patch-package": "^8.0.1",
     "prettier": "^3.6.2"
   },
   "lint-staged": {
